@@ -88,19 +88,100 @@ export default function ProfileScreen() {
   const [videoEnabled, setVideoEnabled] = useState(true);
 
   useEffect(() => {
-    AsyncStorage.getItem("fither_notifications_enabled").then((val) => {
-      setNotifEnabled(val === "true");
-    });
+    const checkPerm = async () => {
+      if (Platform.OS === "web") {
+        if (typeof window !== "undefined" && "Notification" in window) {
+          setNotifEnabled(Notification.permission === "granted");
+        }
+      } else {
+        try {
+          const Notifications = require("expo-notifications");
+          const { status } = await Notifications.getPermissionsAsync();
+          setNotifEnabled(status === "granted");
+        } catch {
+          const val = await AsyncStorage.getItem("fither_notifications_enabled");
+          setNotifEnabled(val === "true");
+        }
+      }
+    };
+    checkPerm();
     AsyncStorage.getItem("fither_welcome_video_enabled").then((val) => {
       setVideoEnabled(val !== "false");
     });
   }, []);
 
   const handleToggleNotif = async (val: boolean) => {
-    setNotifEnabled(val);
-    await AsyncStorage.setItem("fither_notifications_enabled", val ? "true" : "false");
-    if (val && Platform.OS !== "web") {
-      Linking.openSettings();
+    if (Platform.OS === "web") {
+      if (typeof window === "undefined") return;
+      const win = window as any;
+      if (!("Notification" in win)) {
+        win.alert("Your browser does not support notifications.");
+        setNotifEnabled(false);
+        return;
+      }
+      if (Notification.permission === "granted") {
+        win.alert(
+          "Notifications are ON.\n\n" +
+          "To turn them off:\n" +
+          "• Chrome/Edge: click the lock icon in the address bar → Notifications → Block\n" +
+          "• Safari: Settings → Websites → Notifications → find this site → Deny\n" +
+          "• Firefox: click the lock icon → Connection Secure → More Information → Permissions"
+        );
+        setNotifEnabled(true);
+      } else if (Notification.permission === "denied") {
+        win.alert(
+          "Notifications are blocked by your browser.\n\n" +
+          "To enable them:\n" +
+          "• Chrome/Edge: click the lock icon in the address bar → Notifications → Allow\n" +
+          "• Safari: Settings → Websites → Notifications → find this site → Allow\n" +
+          "• Firefox: click the lock icon → Permissions → Notifications → Allow"
+        );
+        setNotifEnabled(false);
+      } else {
+        const permission = await Notification.requestPermission();
+        const isGranted = permission === "granted";
+        setNotifEnabled(isGranted);
+        await AsyncStorage.setItem("fither_notifications_enabled", isGranted ? "true" : "false");
+        if (!isGranted) {
+          win.alert("Notifications blocked. You can enable them in your browser's site settings.");
+        }
+      }
+      return;
+    }
+
+    // Native (Android / iOS)
+    try {
+      const Notifications = require("expo-notifications");
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      if (existingStatus === "granted") {
+        // Already granted — direct to settings to turn off
+        Alert.alert(
+          "Notifications are ON",
+          "To turn off notifications, go to your device Settings and disable them for FitHer.",
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Open Settings", onPress: () => Linking.openSettings() },
+          ]
+        );
+      } else {
+        // Request permission
+        const { status } = await Notifications.requestPermissionsAsync();
+        const isGranted = status === "granted";
+        setNotifEnabled(isGranted);
+        await AsyncStorage.setItem("fither_notifications_enabled", isGranted ? "true" : "false");
+        if (!isGranted) {
+          Alert.alert(
+            "Enable Notifications",
+            "Notifications are disabled. Enable them in your device Settings to receive workout reminders.",
+            [
+              { text: "Cancel", style: "cancel" },
+              { text: "Open Settings", onPress: () => Linking.openSettings() },
+            ]
+          );
+        }
+      }
+    } catch (error) {
+      console.log("Error handling notifications toggle", error);
     }
   };
 

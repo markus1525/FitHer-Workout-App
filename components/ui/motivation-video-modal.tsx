@@ -3,7 +3,20 @@ import { useEffect, useRef, useState } from "react";
 import { VideoView, useVideoPlayer } from "expo-video";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
-const VIDEO_URL = "/FitHer-Workout-App/video/motivational.mp4";
+const getAssetUrl = (path: string) => {
+  if (Platform.OS !== "web") {
+    return path;
+  }
+  if (typeof window !== "undefined") {
+    const pathname = window.location.pathname;
+    if (pathname.includes("/FitHer-Workout-App")) {
+      return `/FitHer-Workout-App${path}`;
+    }
+  }
+  return path;
+};
+
+const VIDEO_URL = getAssetUrl("/video/motivational.mp4");
 
 interface Props {
   visible: boolean;
@@ -26,8 +39,7 @@ export function MotivationVideoModal({ visible, onClose, onDontShowAgain, startM
     p.play();
   });
 
-  // Web autoplay: always start muted so browser allows autoplay,
-  // then unmute immediately after — unless startMuted is true.
+  // Web autoplay handling: try to play with sound if permitted, fall back to muted if blocked.
   useEffect(() => {
     if (Platform.OS !== "web") return;
     if (!visible) {
@@ -42,19 +54,28 @@ export function MotivationVideoModal({ visible, onClose, onDontShowAgain, startM
     const tryPlay = () => {
       const vid = videoRef.current;
       if (!vid) return;
-      vid.muted = true;
-      vid.play()
-        .then(() => {
-          if (!startMuted) {
-            // Unmuting a playing video is NOT blocked by browser autoplay policy
-            vid.muted = false;
-            setMuted(false);
-          }
-          // startMuted=true: stay muted, "Tap for Sound" button remains visible
-        })
-        .catch(() => {
-          // Fully blocked — stay muted, user can tap
+
+      if (startMuted) {
+        vid.muted = true;
+        setMuted(true);
+        vid.play().catch((err: any) => {
+          console.log("Muted autoplay failed:", err);
         });
+      } else {
+        // Try playing with sound directly (which is allowed if the user had a recent interaction)
+        vid.muted = false;
+        setMuted(false);
+        vid.play()
+          .catch((err: any) => {
+            console.log("Autoplay with sound failed, falling back to muted:", err);
+            // Fall back to muted play, which is guaranteed to be allowed
+            vid.muted = true;
+            setMuted(true);
+            vid.play().catch((err2: any) => {
+              console.log("Muted fallback play failed:", err2);
+            });
+          });
+      }
     };
 
     // Short delay so the Modal has time to render the video element
