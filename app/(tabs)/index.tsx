@@ -33,6 +33,7 @@ export default function HomeScreen() {
   const [quote, setQuote] = useState("");
   const [reminderDismissed, setReminderDismissed] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
+  const [videoStartMuted, setVideoStartMuted] = useState(false);
 
   const today = new Date().toISOString().split("T")[0];
   const REMINDER_KEY = `fither_reminder_dismissed_${today}`;
@@ -61,11 +62,18 @@ export default function HomeScreen() {
 
   useEffect(() => {
     // Only show on subsequent opens — first-time is handled by onboarding.tsx.
-    // videoSession.shown is false on every fresh app open, true once shown this session.
+    // Mark synchronously BEFORE the async read to prevent a race with onboarding.tsx.
     if (!state.isLoading && state.onboardingDone && !videoSession.shown) {
-      AsyncStorage.getItem("fither_welcome_video_enabled").then((val) => {
-        if (val !== "false") {
-          videoSession.markShown();
+      videoSession.markShown();
+      Promise.all([
+        AsyncStorage.getItem("fither_welcome_video_enabled"),
+        AsyncStorage.getItem("fither_welcome_video_count"),
+      ]).then(([enabled, countStr]) => {
+        if (enabled !== "false") {
+          const count = parseInt(countStr || "0");
+          // First and second play are with sound; third time onwards is muted
+          setVideoStartMuted(count >= 2);
+          AsyncStorage.setItem("fither_welcome_video_count", String(count + 1));
           setShowVideo(true);
         }
       });
@@ -107,6 +115,7 @@ export default function HomeScreen() {
           AsyncStorage.setItem("fither_welcome_video_enabled", "false");
           setShowVideo(false);
         }}
+        startMuted={videoStartMuted}
       />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
         {/* Greeting */}

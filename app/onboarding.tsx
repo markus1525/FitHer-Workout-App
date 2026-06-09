@@ -29,6 +29,7 @@ export default function OnboardingScreen() {
   const colors = useColors();
   const [step, setStep] = useState(0);
   const [showVideo, setShowVideo] = useState(false);
+  const [videoStartMuted, setVideoStartMuted] = useState(false);
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
   // Metric uses heightCm; imperial uses heightFt + heightIn
@@ -55,6 +56,19 @@ export default function OnboardingScreen() {
       weightKg = isNaN(rawWeight) ? 60 : rawWeight;
     }
 
+    // Read video preference and play count BEFORE completeOnboarding().
+    // Marking the session here prevents index.tsx from also showing the video
+    // when onboardingDone flips to true (duplicate audio fix).
+    const videoEnabled = await AsyncStorage.getItem("fither_welcome_video_enabled");
+    if (videoEnabled !== "false") {
+      // Determine mute state: first and second play are with sound, rest are muted
+      const countStr = await AsyncStorage.getItem("fither_welcome_video_count");
+      const count = parseInt(countStr || "0");
+      setVideoStartMuted(count >= 2);
+      await AsyncStorage.setItem("fither_welcome_video_count", String(count + 1));
+      videoSession.markShown(); // claim the slot before onboardingDone flips
+    }
+
     await updateProfile({
       name: name.trim() || "Beautiful",
       age: parseInt(age) || 25,
@@ -66,10 +80,7 @@ export default function OnboardingScreen() {
     });
     await completeOnboarding();
 
-    // Show motivation video before going to home (if enabled)
-    const videoEnabled = await AsyncStorage.getItem("fither_welcome_video_enabled");
     if (videoEnabled !== "false") {
-      videoSession.markShown();
       setShowVideo(true);
     } else {
       router.replace("/");
@@ -108,6 +119,7 @@ export default function OnboardingScreen() {
         visible={showVideo}
         onClose={handleVideoClose}
         onDontShowAgain={handleDontShowAgain}
+        startMuted={videoStartMuted}
       />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
         {/* Progress */}

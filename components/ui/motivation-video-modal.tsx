@@ -9,9 +9,11 @@ interface Props {
   visible: boolean;
   onClose: () => void;
   onDontShowAgain: () => void;
+  /** First and second show: false (plays with sound). Third time onwards: true (muted). */
+  startMuted?: boolean;
 }
 
-export function MotivationVideoModal({ visible, onClose, onDontShowAgain }: Props) {
+export function MotivationVideoModal({ visible, onClose, onDontShowAgain, startMuted = false }: Props) {
   const [muted, setMuted] = useState(true);
 
   // Web: control via HTML video ref
@@ -20,11 +22,12 @@ export function MotivationVideoModal({ visible, onClose, onDontShowAgain }: Prop
   // Native: expo-video player (null source on web to satisfy hook rules)
   const player = useVideoPlayer(Platform.OS !== "web" ? VIDEO_URL : null, (p) => {
     p.loop = true;
-    p.muted = false;
+    p.muted = true;
     p.play();
   });
 
-  // Web autoplay: start muted → autoplay succeeds → immediately unmute
+  // Web autoplay: always start muted so browser allows autoplay,
+  // then unmute immediately after — unless startMuted is true.
   useEffect(() => {
     if (Platform.OS !== "web") return;
     if (!visible) {
@@ -42,9 +45,12 @@ export function MotivationVideoModal({ visible, onClose, onDontShowAgain }: Prop
       vid.muted = true;
       vid.play()
         .then(() => {
-          // Video autoplayed — now unmute (this is NOT blocked by browser policy)
-          vid.muted = false;
-          setMuted(false);
+          if (!startMuted) {
+            // Unmuting a playing video is NOT blocked by browser autoplay policy
+            vid.muted = false;
+            setMuted(false);
+          }
+          // startMuted=true: stay muted, "Tap for Sound" button remains visible
         })
         .catch(() => {
           // Fully blocked — stay muted, user can tap
@@ -54,20 +60,20 @@ export function MotivationVideoModal({ visible, onClose, onDontShowAgain }: Prop
     // Short delay so the Modal has time to render the video element
     const t = setTimeout(tryPlay, 80);
     return () => clearTimeout(t);
-  }, [visible]);
+  }, [visible, startMuted]);
 
   // Native: play/pause with visibility
   useEffect(() => {
     if (Platform.OS === "web") return;
     if (visible) {
-      player.muted = false;
+      player.muted = startMuted;
       player.play();
-      setMuted(false);
+      setMuted(startMuted);
     } else {
       player.pause();
       setMuted(true);
     }
-  }, [visible]);
+  }, [visible, startMuted]);
 
   const toggleMute = () => {
     const next = !muted;
@@ -133,7 +139,7 @@ export function MotivationVideoModal({ visible, onClose, onDontShowAgain }: Prop
           </View>
         )}
 
-        {/* Sound toggle — only show when muted */}
+        {/* Sound toggle — shown when muted so user can tap to unmute */}
         {muted && (
           <TouchableOpacity onPress={toggleMute} style={styles.muteBtn} activeOpacity={0.8}>
             <MaterialIcons name="volume-off" size={18} color="#fff" />
