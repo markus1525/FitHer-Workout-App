@@ -5,6 +5,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/screen-container";
 import { useApp } from "@/lib/app-context";
 import { useColors } from "@/hooks/use-colors";
+import { ftInToCm } from "@/lib/utils";
 
 const FITNESS_GOALS = [
   { id: "lose_weight", label: "Lose Weight", icon: "🔥", desc: "Burn fat and slim down" },
@@ -26,30 +27,35 @@ export default function OnboardingScreen() {
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
-  const [height, setHeight] = useState("");
+  // Metric uses heightCm; imperial uses heightFt + heightIn
+  const [heightCm, setHeightCm] = useState("");
+  const [heightFt, setHeightFt] = useState("");
+  const [heightIn, setHeightIn] = useState("");
   const [weight, setWeight] = useState("");
   const [goal, setGoal] = useState("");
   const [level, setLevel] = useState("");
   const [unitSystem, setUnitSystem] = useState<"metric" | "imperial">("metric");
 
   const handleComplete = async () => {
-    const rawHeight = parseFloat(height);
     const rawWeight = parseFloat(weight);
-    
-    const defaultHeight = unitSystem === "imperial" ? 65 : 165;
-    const defaultWeight = unitSystem === "imperial" ? 132 : 60;
-    
-    const h = isNaN(rawHeight) ? defaultHeight : rawHeight;
-    const w = isNaN(rawWeight) ? defaultWeight : rawWeight;
+    let finalHeightCm: number;
+    let weightKg: number;
 
-    const heightCm = unitSystem === "imperial" ? h / 0.393701 : h;
-    const weightKg = unitSystem === "imperial" ? w / 2.20462 : w;
+    if (unitSystem === "imperial") {
+      const ft = parseInt(heightFt) || 5;
+      const inches = parseInt(heightIn) || 5;
+      finalHeightCm = ftInToCm(ft, inches);
+      weightKg = (isNaN(rawWeight) ? 132 : rawWeight) / 2.20462;
+    } else {
+      finalHeightCm = isNaN(parseFloat(heightCm)) ? 165 : parseFloat(heightCm);
+      weightKg = isNaN(rawWeight) ? 60 : rawWeight;
+    }
 
     await updateProfile({
       name: name.trim() || "Beautiful",
       age: parseInt(age) || 25,
-      height: heightCm,
-      weight: weightKg,
+      height: Math.round(finalHeightCm * 10) / 10,
+      weight: Math.round(weightKg * 10) / 10,
       fitnessGoal: goal || "stay_active",
       fitnessLevel: level || "beginner",
       unitSystem: unitSystem,
@@ -62,7 +68,11 @@ export default function OnboardingScreen() {
     switch (step) {
       case 0: return true;
       case 1: return name.trim().length > 0;
-      case 2: return age.length > 0 && height.length > 0 && weight.length > 0;
+      case 2:
+        const heightOk = unitSystem === "imperial"
+          ? heightFt.length > 0 && heightIn.length > 0
+          : heightCm.length > 0;
+        return age.length > 0 && heightOk && weight.length > 0;
       case 3: return goal.length > 0;
       case 4: return level.length > 0;
       default: return true;
@@ -203,31 +213,80 @@ export default function OnboardingScreen() {
                   returnKeyType="done"
                 />
               </View>
-              <View>
-                <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 6 }}>
-                  Height ({unitSystem === "imperial" ? "inches" : "cm"})
-                </Text>
-                <TextInput
-                  value={height}
-                  onChangeText={setHeight}
-                  placeholder={unitSystem === "imperial" ? "65" : "165"}
-                  placeholderTextColor={colors.muted}
-                  keyboardType="decimal-pad"
-                  style={{
-                    backgroundColor: colors.surface,
-                    borderWidth: 1,
-                    borderColor: colors.border,
-                    borderRadius: 16,
-                    paddingHorizontal: 18,
-                    paddingVertical: 14,
-                    fontSize: 16,
-                    color: colors.foreground,
-                    textAlign: "left",
-                    textAlignVertical: "center",
-                  }}
-                  returnKeyType="done"
-                />
-              </View>
+              {unitSystem === "imperial" ? (
+                <View style={{ flexDirection: "row", gap: 12 }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 6 }}>Feet</Text>
+                    <TextInput
+                      value={heightFt}
+                      onChangeText={setHeightFt}
+                      placeholder="5"
+                      placeholderTextColor={colors.muted}
+                      keyboardType="number-pad"
+                      style={{
+                        backgroundColor: colors.surface,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        borderRadius: 16,
+                        paddingHorizontal: 18,
+                        paddingVertical: 14,
+                        fontSize: 16,
+                        color: colors.foreground,
+                        textAlign: "center",
+                        textAlignVertical: "center",
+                      }}
+                      returnKeyType="done"
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 6 }}>Inches</Text>
+                    <TextInput
+                      value={heightIn}
+                      onChangeText={setHeightIn}
+                      placeholder="8"
+                      placeholderTextColor={colors.muted}
+                      keyboardType="number-pad"
+                      style={{
+                        backgroundColor: colors.surface,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        borderRadius: 16,
+                        paddingHorizontal: 18,
+                        paddingVertical: 14,
+                        fontSize: 16,
+                        color: colors.foreground,
+                        textAlign: "center",
+                        textAlignVertical: "center",
+                      }}
+                      returnKeyType="done"
+                    />
+                  </View>
+                </View>
+              ) : (
+                <View>
+                  <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 6 }}>Height (cm)</Text>
+                  <TextInput
+                    value={heightCm}
+                    onChangeText={setHeightCm}
+                    placeholder="165"
+                    placeholderTextColor={colors.muted}
+                    keyboardType="decimal-pad"
+                    style={{
+                      backgroundColor: colors.surface,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      borderRadius: 16,
+                      paddingHorizontal: 18,
+                      paddingVertical: 14,
+                      fontSize: 16,
+                      color: colors.foreground,
+                      textAlign: "left",
+                      textAlignVertical: "center",
+                    }}
+                    returnKeyType="done"
+                  />
+                </View>
+              )}
               <View>
                 <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 6 }}>
                   Weight ({unitSystem === "imperial" ? "lbs" : "kg"})

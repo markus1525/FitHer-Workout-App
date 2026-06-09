@@ -7,6 +7,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { useApp } from "@/lib/app-context";
 import { useColors } from "@/hooks/use-colors";
 import { useThemeContext } from "@/lib/theme-provider";
+import { cmToFtIn, ftInToCm, formatHeight } from "@/lib/utils";
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -178,7 +179,10 @@ export default function ProfileScreen() {
   };
   const [name, setName] = useState(state.profile?.name || "");
   const [age, setAge] = useState(String(state.profile?.age || ""));
-  const [height, setHeight] = useState(String(state.profile?.height || ""));
+  // Metric: heightCm string. Imperial: separate ft + in strings.
+  const [heightCm, setHeightCm] = useState(String(state.profile?.height || ""));
+  const [heightFt, setHeightFt] = useState("");
+  const [heightIn, setHeightIn] = useState("");
   const [weight, setWeight] = useState(String(state.profile?.weight || ""));
   const [showNotifInfo, setShowNotifInfo] = useState(false);
   const [showAboutInfo, setShowAboutInfo] = useState(false);
@@ -187,21 +191,23 @@ export default function ProfileScreen() {
 
   const handleSaveProfile = async () => {
     if (!name.trim()) return;
-    const rawHeight = parseFloat(height);
     const rawWeight = parseFloat(weight);
-    
-    let heightCm = isNaN(rawHeight) ? 165 : rawHeight;
+    let finalHeightCm: number;
     let weightKg = isNaN(rawWeight) ? 60 : rawWeight;
-    
+
     if (unitSystem === "imperial") {
-      heightCm = heightCm / 0.393701;
+      const ft = parseInt(heightFt) || 0;
+      const inches = parseInt(heightIn) || 0;
+      finalHeightCm = ftInToCm(ft, inches) || 165;
       weightKg = weightKg / 2.20462;
+    } else {
+      finalHeightCm = parseFloat(heightCm) || 165;
     }
 
     await updateProfile({
       name: name.trim(),
       age: parseInt(age) || 25,
-      height: Math.round(heightCm * 10) / 10,
+      height: Math.round(finalHeightCm * 10) / 10,
       weight: Math.round(weightKg * 10) / 10,
       fitnessGoal: state.profile?.fitnessGoal || "stay_active",
       fitnessLevel: state.profile?.fitnessLevel || "beginner",
@@ -249,31 +255,33 @@ export default function ProfileScreen() {
   const toggleUnit = async () => {
     const newUnit = unitSystem === "metric" ? "imperial" : "metric";
 
-    // If user is in edit mode, convert the currently typed height/weight values
     if (editing) {
-      const h = parseFloat(height);
-      const w = parseFloat(weight);
-      if (!isNaN(h)) {
-        if (newUnit === "imperial") {
-          setHeight(String(Math.round(h * 0.393701 * 10) / 10)); // cm → in
-        } else {
-          setHeight(String(Math.round((h / 0.393701) * 10) / 10)); // in → cm
-        }
+      // Convert height
+      if (newUnit === "imperial") {
+        // cm → ft/in
+        const cm = parseFloat(heightCm) || 165;
+        const { ft, inches } = cmToFtIn(cm);
+        setHeightFt(String(ft));
+        setHeightIn(String(inches));
+      } else {
+        // ft/in → cm
+        const ft = parseInt(heightFt) || 0;
+        const inches = parseInt(heightIn) || 0;
+        setHeightCm(String(ftInToCm(ft, inches)));
       }
+      // Convert weight
+      const w = parseFloat(weight);
       if (!isNaN(w)) {
         if (newUnit === "imperial") {
-          setWeight(String(Math.round(w * 2.20462 * 10) / 10)); // kg → lbs
+          setWeight(String(Math.round(w * 2.20462 * 10) / 10));
         } else {
-          setWeight(String(Math.round((w / 2.20462) * 10) / 10)); // lbs → kg
+          setWeight(String(Math.round((w / 2.20462) * 10) / 10));
         }
       }
     }
 
     if (state.profile) {
-      await updateProfile({
-        ...state.profile,
-        unitSystem: newUnit,
-      });
+      await updateProfile({ ...state.profile, unitSystem: newUnit });
     }
   };
 
@@ -350,7 +358,7 @@ export default function ProfileScreen() {
             <>
               <Text className="text-xl font-bold" style={{ color: colors.foreground }}>{state.profile?.name || "User"}</Text>
               <Text className="text-sm mt-1" style={{ color: colors.muted }}>
-                {state.profile?.age || 0} yrs • {unitSystem === "imperial" ? `${Math.round((state.profile?.height || 0) * 0.393701 * 10) / 10} in` : `${state.profile?.height || 0} cm`} • {unitSystem === "imperial" ? `${Math.round((state.profile?.weight || 0) * 2.20462 * 10) / 10} lbs` : `${state.profile?.weight || 0} kg`}
+                {state.profile?.age || 0} yrs • {formatHeight(state.profile?.height || 0, unitSystem)} • {unitSystem === "imperial" ? `${Math.round((state.profile?.weight || 0) * 2.20462 * 10) / 10} lbs` : `${state.profile?.weight || 0} kg`}
               </Text>
               <TouchableOpacity
                 onPress={() => {
@@ -360,10 +368,12 @@ export default function ProfileScreen() {
                   const h = state.profile?.height || 165;
                   const w = state.profile?.weight || 60;
                   if (unitSystem === "imperial") {
-                    setHeight(String(Math.round(h * 0.393701 * 10) / 10));
+                    const { ft, inches } = cmToFtIn(h);
+                    setHeightFt(String(ft));
+                    setHeightIn(String(inches));
                     setWeight(String(Math.round(w * 2.20462 * 10) / 10));
                   } else {
-                    setHeight(String(h));
+                    setHeightCm(String(h));
                     setWeight(String(w));
                   }
                 }}
@@ -430,29 +440,80 @@ export default function ProfileScreen() {
                     returnKeyType="done"
                   />
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 4 }}>Height ({unitSystem === "imperial" ? "in" : "cm"})</Text>
-                  <TextInput
-                    value={height}
-                    onChangeText={setHeight}
-                    keyboardType="decimal-pad"
-                    style={{
-                      backgroundColor: colors.background,
-                      borderWidth: 1,
-                      borderColor: colors.border,
-                      borderRadius: 12,
-                      paddingHorizontal: 14,
-                      paddingVertical: 12,
-                      fontSize: 15,
-                      color: colors.foreground,
-                      textAlign: "center",
-                      textAlignVertical: "center",
-                    }}
-                    placeholder={unitSystem === "imperial" ? "65" : "165"}
-                    placeholderTextColor={colors.muted}
-                    returnKeyType="done"
-                  />
-                </View>
+                {unitSystem === "imperial" ? (
+                  <>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 4 }}>Feet</Text>
+                      <TextInput
+                        value={heightFt}
+                        onChangeText={setHeightFt}
+                        keyboardType="number-pad"
+                        style={{
+                          backgroundColor: colors.background,
+                          borderWidth: 1,
+                          borderColor: colors.border,
+                          borderRadius: 12,
+                          paddingHorizontal: 14,
+                          paddingVertical: 12,
+                          fontSize: 15,
+                          color: colors.foreground,
+                          textAlign: "center",
+                          textAlignVertical: "center",
+                        }}
+                        placeholder="5"
+                        placeholderTextColor={colors.muted}
+                        returnKeyType="done"
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 4 }}>Inches</Text>
+                      <TextInput
+                        value={heightIn}
+                        onChangeText={setHeightIn}
+                        keyboardType="number-pad"
+                        style={{
+                          backgroundColor: colors.background,
+                          borderWidth: 1,
+                          borderColor: colors.border,
+                          borderRadius: 12,
+                          paddingHorizontal: 14,
+                          paddingVertical: 12,
+                          fontSize: 15,
+                          color: colors.foreground,
+                          textAlign: "center",
+                          textAlignVertical: "center",
+                        }}
+                        placeholder="8"
+                        placeholderTextColor={colors.muted}
+                        returnKeyType="done"
+                      />
+                    </View>
+                  </>
+                ) : (
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 4 }}>Height (cm)</Text>
+                    <TextInput
+                      value={heightCm}
+                      onChangeText={setHeightCm}
+                      keyboardType="decimal-pad"
+                      style={{
+                        backgroundColor: colors.background,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        borderRadius: 12,
+                        paddingHorizontal: 14,
+                        paddingVertical: 12,
+                        fontSize: 15,
+                        color: colors.foreground,
+                        textAlign: "center",
+                        textAlignVertical: "center",
+                      }}
+                      placeholder="165"
+                      placeholderTextColor={colors.muted}
+                      returnKeyType="done"
+                    />
+                  </View>
+                )}
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 4 }}>Weight ({unitSystem === "imperial" ? "lbs" : "kg"})</Text>
                   <TextInput

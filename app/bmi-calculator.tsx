@@ -5,6 +5,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/screen-container";
 import { useApp } from "@/lib/app-context";
 import { useColors } from "@/hooks/use-colors";
+import { cmToFtIn, ftInToCm } from "@/lib/utils";
 
 function getBMICategory(bmi: number) {
   if (bmi < 18.5) return { label: "Underweight", color: "#2196F3", advice: "Consider gaining some healthy weight through balanced nutrition." };
@@ -20,40 +21,47 @@ export default function BMICalculatorScreen() {
 
   const unitSystem = state.profile?.unitSystem || "metric";
 
-  const initialHeight = state.profile?.height
-    ? (unitSystem === "imperial"
-        ? String(Math.round(state.profile.height * 0.393701 * 10) / 10)
-        : String(state.profile.height))
-    : "";
+  // Imperial height stored as ft + in separately
+  const initFtIn = state.profile?.height && unitSystem === "imperial"
+    ? cmToFtIn(state.profile.height)
+    : null;
 
-  const initialWeight = state.profile?.weight
-    ? (unitSystem === "imperial"
-        ? String(Math.round(state.profile.weight * 2.20462 * 10) / 10)
-        : String(state.profile.weight))
-    : "";
-
-  const [height, setHeight] = useState(initialHeight);
-  const [weight, setWeight] = useState(initialWeight);
+  const [heightCm, setHeightCm] = useState(
+    state.profile?.height && unitSystem === "metric" ? String(state.profile.height) : ""
+  );
+  const [heightFt, setHeightFt] = useState(initFtIn ? String(initFtIn.ft) : "");
+  const [heightIn, setHeightIn] = useState(initFtIn ? String(initFtIn.inches) : "");
+  const [weight, setWeight] = useState(
+    state.profile?.weight
+      ? (unitSystem === "imperial"
+          ? String(Math.round(state.profile.weight * 2.20462 * 10) / 10)
+          : String(state.profile.weight))
+      : ""
+  );
   const [result, setResult] = useState<number | null>(null);
 
   const calculateBMI = () => {
-    const h = parseFloat(height);
     const w = parseFloat(weight);
-    if (!h || !w || h <= 0 || w <= 0) return;
+    if (!w || w <= 0) return;
 
     let bmi = 0;
     let weightKg = w;
-    let heightCm = h;
+    let finalHeightCm: number;
 
     if (unitSystem === "imperial") {
-      // Imperial formula: 703 * lbs / (in * in)
-      bmi = (703 * w) / (h * h);
+      const ft = parseInt(heightFt) || 0;
+      const inches = parseInt(heightIn) || 0;
+      const totalInches = ft * 12 + inches;
+      if (totalInches <= 0) return;
+      bmi = (703 * w) / (totalInches * totalInches);
       weightKg = w / 2.20462;
-      heightCm = h / 0.393701;
+      finalHeightCm = ftInToCm(ft, inches);
     } else {
-      // Metric formula: kg / (m * m)
+      const h = parseFloat(heightCm);
+      if (!h || h <= 0) return;
       const heightM = h / 100;
       bmi = w / (heightM * heightM);
+      finalHeightCm = h;
     }
 
     const rounded = Math.round(bmi * 10) / 10;
@@ -63,7 +71,7 @@ export default function BMICalculatorScreen() {
       date: new Date().toISOString().split("T")[0],
       bmi: rounded,
       weight: Math.round(weightKg * 10) / 10,
-      height: Math.round(heightCm * 10) / 10,
+      height: Math.round(finalHeightCm * 10) / 10,
     });
   };
 
@@ -85,31 +93,87 @@ export default function BMICalculatorScreen() {
           <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 16 }}>
             Body Mass Index (BMI) is a measure of body fat based on height and weight.
           </Text>
-          <View style={{ marginBottom: 16 }}>
-            <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 8 }}>
-              Height ({unitSystem === "imperial" ? "inches" : "cm"})
-            </Text>
-            <TextInput
-              value={height}
-              onChangeText={setHeight}
-              placeholder={unitSystem === "imperial" ? "e.g., 65" : "e.g., 165"}
-              placeholderTextColor={colors.muted}
-              keyboardType="decimal-pad"
-              returnKeyType="done"
-              style={{
-                backgroundColor: colors.background,
-                borderWidth: 1,
-                borderColor: colors.border,
-                borderRadius: 12,
-                paddingHorizontal: 16,
-                paddingVertical: 14,
-                fontSize: 16,
-                color: colors.foreground,
-                textAlign: "left",
-                textAlignVertical: "center",
-              }}
-            />
-          </View>
+          {unitSystem === "imperial" ? (
+            <View style={{ marginBottom: 16 }}>
+              <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 8 }}>
+                Height
+              </Text>
+              <View style={{ flexDirection: "row", gap: 10 }}>
+                <View style={{ flex: 1 }}>
+                  <TextInput
+                    value={heightFt}
+                    onChangeText={setHeightFt}
+                    placeholder="5 ft"
+                    placeholderTextColor={colors.muted}
+                    keyboardType="number-pad"
+                    returnKeyType="done"
+                    style={{
+                      backgroundColor: colors.background,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      borderRadius: 12,
+                      paddingHorizontal: 16,
+                      paddingVertical: 14,
+                      fontSize: 16,
+                      color: colors.foreground,
+                      textAlign: "center",
+                      textAlignVertical: "center",
+                    }}
+                  />
+                  <Text style={{ fontSize: 11, color: colors.muted, textAlign: "center", marginTop: 4 }}>feet</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <TextInput
+                    value={heightIn}
+                    onChangeText={setHeightIn}
+                    placeholder="8 in"
+                    placeholderTextColor={colors.muted}
+                    keyboardType="number-pad"
+                    returnKeyType="done"
+                    style={{
+                      backgroundColor: colors.background,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      borderRadius: 12,
+                      paddingHorizontal: 16,
+                      paddingVertical: 14,
+                      fontSize: 16,
+                      color: colors.foreground,
+                      textAlign: "center",
+                      textAlignVertical: "center",
+                    }}
+                  />
+                  <Text style={{ fontSize: 11, color: colors.muted, textAlign: "center", marginTop: 4 }}>inches</Text>
+                </View>
+              </View>
+            </View>
+          ) : (
+            <View style={{ marginBottom: 16 }}>
+              <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 8 }}>
+                Height (cm)
+              </Text>
+              <TextInput
+                value={heightCm}
+                onChangeText={setHeightCm}
+                placeholder="e.g., 165"
+                placeholderTextColor={colors.muted}
+                keyboardType="decimal-pad"
+                returnKeyType="done"
+                style={{
+                  backgroundColor: colors.background,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  borderRadius: 12,
+                  paddingHorizontal: 16,
+                  paddingVertical: 14,
+                  fontSize: 16,
+                  color: colors.foreground,
+                  textAlign: "left",
+                  textAlignVertical: "center",
+                }}
+              />
+            </View>
+          )}
           <View style={{ marginBottom: 16 }}>
             <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 8 }}>
               Weight ({unitSystem === "imperial" ? "lbs" : "kg"})
