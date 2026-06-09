@@ -1,7 +1,9 @@
-import { ScrollView, Text, View, TouchableOpacity, Linking } from "react-native";
+import { ScrollView, Text, View, TouchableOpacity } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useState } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/screen-container";
+import { YouTubeModal } from "@/components/youtube-modal";
 import { useApp } from "@/lib/app-context";
 import { DEFAULT_WORKOUT_PLANS, EXERCISES, WorkoutPlan } from "@/data/exercises";
 import { useColors } from "@/hooks/use-colors";
@@ -11,6 +13,11 @@ export default function WorkoutDetailScreen() {
   const { planId, isCustom } = useLocalSearchParams<{ planId: string; isCustom?: string }>();
   const { state } = useApp();
   const colors = useColors();
+  const [videoModal, setVideoModal] = useState<{ visible: boolean; videoId: string; title: string }>({
+    visible: false,
+    videoId: "",
+    title: "",
+  });
 
   const plan: WorkoutPlan | undefined = isCustom === "1"
     ? state.customPlans.find((p) => p.id === planId)
@@ -36,12 +43,20 @@ export default function WorkoutDetailScreen() {
     return colors.error;
   };
 
-  const openYouTube = (youtubeId: string) => {
-    Linking.openURL(`https://www.youtube.com/watch?v=${youtubeId}`);
+  const openVideoPreview = (youtubeId: string, exerciseName: string) => {
+    setVideoModal({ visible: true, videoId: youtubeId, title: exerciseName });
   };
 
   return (
     <ScreenContainer className="px-4 pt-2">
+      {/* YouTube Video Modal */}
+      <YouTubeModal
+        visible={videoModal.visible}
+        videoId={videoModal.videoId}
+        title={videoModal.title}
+        onClose={() => setVideoModal({ visible: false, videoId: "", title: "" })}
+      />
+
       {/* Header */}
       <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 16 }}>
         <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 12 }} activeOpacity={0.7}>
@@ -98,9 +113,9 @@ export default function WorkoutDetailScreen() {
                     {" • "}{exercise.calories} cal
                   </Text>
                 </View>
-                {/* YouTube Preview Button */}
+                {/* YouTube Preview Button - opens in-app modal */}
                 <TouchableOpacity
-                  onPress={() => openYouTube(exercise.youtubeId)}
+                  onPress={() => openVideoPreview(exercise.youtubeId, exercise.name)}
                   style={{ backgroundColor: "#FF0000", borderRadius: 18, width: 36, height: 36, alignItems: "center", justifyContent: "center" }}
                   activeOpacity={0.7}
                 >

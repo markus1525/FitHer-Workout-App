@@ -1,8 +1,9 @@
-import { Text, View, TouchableOpacity, Linking } from "react-native";
+import { Text, View, TouchableOpacity } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState, useEffect, useRef } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/screen-container";
+import { YouTubeModal } from "@/components/youtube-modal";
 import { useApp } from "@/lib/app-context";
 import { DEFAULT_WORKOUT_PLANS, EXERCISES, Exercise } from "@/data/exercises";
 import { useColors } from "@/hooks/use-colors";
@@ -25,6 +26,11 @@ export default function ExercisePlayerScreen() {
   const [isRunning, setIsRunning] = useState(false);
   const [isResting, setIsResting] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
+  const [videoModal, setVideoModal] = useState<{ visible: boolean; videoId: string; title: string }>({
+    visible: false,
+    videoId: "",
+    title: "",
+  });
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number>(Date.now());
 
@@ -132,6 +138,17 @@ export default function ExercisePlayerScreen() {
     return `${m}:${s.toString().padStart(2, "0")}`;
   };
 
+  const openVideoPreview = (youtubeId: string, exerciseName: string) => {
+    // Pause the timer when watching video
+    setIsRunning(false);
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    setVideoModal({ visible: true, videoId: youtubeId, title: exerciseName });
+  };
+
+  const closeVideoPreview = () => {
+    setVideoModal({ visible: false, videoId: "", title: "" });
+  };
+
   if (!plan || exercises.length === 0) {
     return (
       <ScreenContainer className="items-center justify-center px-6">
@@ -182,6 +199,14 @@ export default function ExercisePlayerScreen() {
 
   return (
     <ScreenContainer edges={["top", "bottom", "left", "right"]} className="px-4">
+      {/* YouTube Video Modal */}
+      <YouTubeModal
+        visible={videoModal.visible}
+        videoId={videoModal.videoId}
+        title={videoModal.title}
+        onClose={closeVideoPreview}
+      />
+
       {/* Header */}
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
         <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7}>
@@ -226,10 +251,10 @@ export default function ExercisePlayerScreen() {
           <Text style={{ fontSize: 56, fontWeight: "700", color: colors.foreground }}>{formatTime(timeLeft)}</Text>
         </View>
 
-        {/* YouTube Preview */}
+        {/* Watch Preview Button - opens in-app modal */}
         {!isResting && currentExercise && (
           <TouchableOpacity
-            onPress={() => Linking.openURL(`https://www.youtube.com/watch?v=${currentExercise.youtubeId}`)}
+            onPress={() => openVideoPreview(currentExercise.youtubeId, currentExercise.name)}
             style={{
               flexDirection: "row",
               alignItems: "center",
@@ -244,7 +269,7 @@ export default function ExercisePlayerScreen() {
             activeOpacity={0.7}
           >
             <MaterialIcons name="play-circle-filled" size={24} color="#FF0000" />
-            <Text style={{ fontSize: 14, color: colors.foreground, fontWeight: "500", marginLeft: 8 }}>Watch on YouTube</Text>
+            <Text style={{ fontSize: 14, color: colors.foreground, fontWeight: "500", marginLeft: 8 }}>Watch Preview</Text>
           </TouchableOpacity>
         )}
       </View>

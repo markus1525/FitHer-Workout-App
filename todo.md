@@ -26,3 +26,4 @@
 - [x] Fix settings section not clickable on mobile (TouchableOpacity fix)
 - [x] Add profile picture upload feature
 - [x] Fix general alignment and error issues
+- [x] Replace external YouTube links with in-app popup video player modal
