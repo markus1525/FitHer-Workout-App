@@ -1,4 +1,4 @@
-import { ScrollView, Text, View, TouchableOpacity, TextInput, Alert, Platform, Image, Switch, Linking, AppState } from "react-native";
+import { ScrollView, Text, View, TouchableOpacity, TextInput, Alert, Platform, Image, Linking } from "react-native";
 import { useState, useEffect } from "react";
 import { useRouter } from "expo-router";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -16,110 +16,8 @@ export default function ProfileScreen() {
   const { colorScheme, setColorScheme } = useThemeContext();
   const [editing, setEditing] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
 
   const unitSystem = state.profile?.unitSystem || "metric";
-
-  const checkNotificationPermission = async () => {
-    if (Platform.OS === "web") {
-      if (typeof window !== "undefined" && "Notification" in window) {
-        setNotificationsEnabled(Notification.permission === "granted");
-      }
-      return;
-    }
-    try {
-      const Notifications = require("expo-notifications");
-      const { status } = await Notifications.getPermissionsAsync();
-      setNotificationsEnabled(status === "granted");
-    } catch (error) {
-      console.log("Error checking notification permissions", error);
-    }
-  };
-
-  useEffect(() => {
-    checkNotificationPermission();
-
-    // Recheck permission when app returns to foreground
-    const subscription = AppState.addEventListener("change", (nextAppState) => {
-      if (nextAppState === "active") {
-        checkNotificationPermission();
-      }
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, []);
-
-  const handleToggleNotifications = async () => {
-    if (Platform.OS === "web") {
-      if (typeof window === "undefined" || !("Notification" in window)) {
-        window.alert("Your browser does not support notifications.");
-        return;
-      }
-      if (Notification.permission === "granted") {
-        window.alert(
-          "Notifications are ON.\n\n" +
-          "To turn them off:\n" +
-          "• Chrome/Edge: click the lock icon in the address bar → Notifications → Block\n" +
-          "• Safari: Settings → Websites → Notifications → find this site → Deny\n" +
-          "• Firefox: click the lock icon → Connection Secure → More Information → Permissions"
-        );
-        setNotificationsEnabled(true);
-      } else if (Notification.permission === "denied") {
-        window.alert(
-          "Notifications are blocked by your browser.\n\n" +
-          "To enable them:\n" +
-          "• Chrome/Edge: click the lock icon in the address bar → Notifications → Allow\n" +
-          "• Safari: Settings → Websites → Notifications → find this site → Allow\n" +
-          "• Firefox: click the lock icon → Permissions → Notifications → Allow"
-        );
-        setNotificationsEnabled(false);
-      } else {
-        const permission = await Notification.requestPermission();
-        setNotificationsEnabled(permission === "granted");
-        if (permission === "denied") {
-          window.alert("Notifications blocked. You can enable them in your browser's site settings.");
-        }
-      }
-      return;
-    }
-
-    // Native (Android / iOS)
-    try {
-      const Notifications = require("expo-notifications");
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      if (existingStatus === "granted") {
-        // Already granted — direct to settings to turn off
-        Alert.alert(
-          "Notifications are ON",
-          "To turn off notifications, go to your device Settings and disable them for FitHer.",
-          [
-            { text: "Cancel", style: "cancel" },
-            { text: "Open Settings", onPress: () => Linking.openSettings() },
-          ]
-        );
-      } else {
-        // Request permission
-        const { status } = await Notifications.requestPermissionsAsync();
-        if (status === "granted") {
-          setNotificationsEnabled(true);
-        } else {
-          setNotificationsEnabled(false);
-          Alert.alert(
-            "Enable Notifications",
-            "Notifications are disabled. Enable them in your device Settings to receive workout reminders.",
-            [
-              { text: "Cancel", style: "cancel" },
-              { text: "Open Settings", onPress: () => Linking.openSettings() },
-            ]
-          );
-        }
-      }
-    } catch (error) {
-      console.log("Error handling notifications toggle", error);
-    }
-  };
 
   useEffect(() => {
     if (Platform.OS === "web") {
@@ -184,7 +82,6 @@ export default function ProfileScreen() {
   const [heightFt, setHeightFt] = useState("");
   const [heightIn, setHeightIn] = useState("");
   const [weight, setWeight] = useState(String(state.profile?.weight || ""));
-  const [showNotifInfo, setShowNotifInfo] = useState(false);
   const [showAboutInfo, setShowAboutInfo] = useState(false);
 
   const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -670,9 +567,8 @@ export default function ProfileScreen() {
         {/* Settings */}
         <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginBottom: 12 }}>Settings</Text>
         <View style={{ backgroundColor: colors.surface, borderRadius: 16, overflow: "hidden", marginBottom: 24 }}>
-          {/* Notifications */}
-          <TouchableOpacity
-            onPress={() => setShowNotifInfo(!showNotifInfo)}
+          {/* In-App Reminders */}
+          <View
             style={{
               flexDirection: "row",
               alignItems: "center",
@@ -680,26 +576,18 @@ export default function ProfileScreen() {
               borderBottomWidth: 1,
               borderBottomColor: colors.border,
             }}
-            activeOpacity={0.7}
           >
-            <MaterialIcons name="notifications" size={20} color={colors.primary} />
-            <Text style={{ fontSize: 14, color: colors.foreground, marginLeft: 12, flex: 1 }}>Notifications</Text>
-            <Switch
-              value={notificationsEnabled}
-              onValueChange={handleToggleNotifications}
-              trackColor={{ false: colors.border, true: colors.primary }}
-              thumbColor={Platform.OS === "android" ? (notificationsEnabled ? colors.primary : "#f4f3f4") : undefined}
-              style={{ marginRight: 8, transform: Platform.OS === "ios" ? [{ scaleX: 0.8 }, { scaleY: 0.8 }] : undefined }}
-            />
-            <MaterialIcons name={showNotifInfo ? "expand-less" : "expand-more"} size={20} color={colors.muted} />
-          </TouchableOpacity>
-          {showNotifInfo && (
-            <View style={{ padding: 16, paddingLeft: 48, paddingTop: 12, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-              <Text style={{ fontSize: 12, color: colors.muted, lineHeight: 18 }}>
-                Notifications will remind you about daily workouts and water intake. Enable them in your device settings for the best experience.
+            <MaterialIcons name="notifications-active" size={20} color={colors.primary} />
+            <View style={{ flex: 1, marginLeft: 12 }}>
+              <Text style={{ fontSize: 14, color: colors.foreground }}>Daily Reminders</Text>
+              <Text style={{ fontSize: 11, color: colors.muted, marginTop: 2, lineHeight: 16 }}>
+                A banner appears on the home screen if you haven't worked out today.
               </Text>
             </View>
-          )}
+            <View style={{ backgroundColor: "#4CAF5020", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
+              <Text style={{ fontSize: 11, color: "#4CAF50", fontWeight: "700" }}>Active</Text>
+            </View>
+          </View>
 
           {/* Units */}
           <TouchableOpacity

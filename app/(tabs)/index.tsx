@@ -2,6 +2,7 @@ import { ScrollView, Text, View, TouchableOpacity, Platform } from "react-native
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ScreenContainer } from "@/components/screen-container";
 import { useApp } from "@/lib/app-context";
 import { MOTIVATIONAL_QUOTES, DEFAULT_WORKOUT_PLANS, CYCLE_PHASES } from "@/data/exercises";
@@ -28,11 +29,26 @@ export default function HomeScreen() {
   const { state, addWater, removeWater } = useApp();
   const colors = useColors();
   const [quote, setQuote] = useState("");
+  const [reminderDismissed, setReminderDismissed] = useState(false);
+
+  const today = new Date().toISOString().split("T")[0];
+  const REMINDER_KEY = `fither_reminder_dismissed_${today}`;
 
   useEffect(() => {
     const idx = Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length);
     setQuote(MOTIVATIONAL_QUOTES[idx]);
   }, []);
+
+  useEffect(() => {
+    AsyncStorage.getItem(REMINDER_KEY).then((val) => {
+      if (val === "true") setReminderDismissed(true);
+    });
+  }, [REMINDER_KEY]);
+
+  const handleDismissReminder = async () => {
+    await AsyncStorage.setItem(REMINDER_KEY, "true");
+    setReminderDismissed(true);
+  };
 
   useEffect(() => {
     if (!state.isLoading && !state.onboardingDone) {
@@ -52,6 +68,9 @@ export default function HomeScreen() {
   const phaseInfo = currentPhase ? CYCLE_PHASES[currentPhase as keyof typeof CYCLE_PHASES] : null;
   const todayDay = new Date().getDay();
   const isRestDay = state.schedule[todayDay]?.isRestDay ?? false;
+
+  const workedOutToday = state.history.some((h) => h.date === today);
+  const showReminder = state.onboardingDone && !workedOutToday && !isRestDay && !reminderDismissed;
   const thisWeekWorkouts = state.history.filter((h) => {
     const d = new Date(h.date);
     const now = new Date();
@@ -73,6 +92,53 @@ export default function HomeScreen() {
           </Text>
           <Text style={{ fontSize: 13, color: colors.muted, marginTop: 4, fontStyle: "italic" }}>"{quote}"</Text>
         </View>
+
+        {/* Daily Workout Reminder */}
+        {showReminder && (
+          <View
+            style={{
+              backgroundColor: colors.primary + "18",
+              borderWidth: 1,
+              borderColor: colors.primary + "50",
+              borderRadius: 16,
+              padding: 14,
+              marginBottom: 16,
+              flexDirection: "row",
+              alignItems: "center",
+            }}
+          >
+            <Text style={{ fontSize: 24, marginRight: 10 }}>🏋️‍♀️</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 14, fontWeight: "700", color: colors.primary }}>
+                No workout yet today!
+              </Text>
+              <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>
+                Even 10 minutes makes a difference. Let's go!
+              </Text>
+              <TouchableOpacity
+                onPress={() => router.push("/(tabs)/workouts")}
+                style={{
+                  marginTop: 8,
+                  backgroundColor: colors.primary,
+                  borderRadius: 10,
+                  paddingVertical: 6,
+                  paddingHorizontal: 14,
+                  alignSelf: "flex-start",
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={{ color: "#FFF", fontSize: 12, fontWeight: "700" }}>Start Now</Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity
+              onPress={handleDismissReminder}
+              style={{ padding: 4, marginLeft: 4 }}
+              activeOpacity={0.7}
+            >
+              <MaterialIcons name="close" size={18} color={colors.muted} />
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Cycle Phase Banner */}
         {phaseInfo && (
