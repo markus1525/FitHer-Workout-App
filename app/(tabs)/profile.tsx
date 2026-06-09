@@ -6,11 +6,13 @@ import * as ImagePicker from "expo-image-picker";
 import { ScreenContainer } from "@/components/screen-container";
 import { useApp } from "@/lib/app-context";
 import { useColors } from "@/hooks/use-colors";
+import { useThemeContext } from "@/lib/theme-provider";
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { state, updateProfile, updateSchedule } = useApp();
   const colors = useColors();
+  const { colorScheme, setColorScheme } = useThemeContext();
   const [editing, setEditing] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
@@ -512,6 +514,31 @@ export default function ProfileScreen() {
               Units: {unitSystem === "metric" ? "Metric (kg/cm)" : "Imperial (lb/in)"}
             </Text>
             <MaterialIcons name="swap-horiz" size={20} color={colors.muted} />
+          </TouchableOpacity>
+
+          {/* Theme */}
+          <TouchableOpacity
+            onPress={() => setColorScheme(colorScheme === "dark" ? "light" : "dark")}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              padding: 16,
+              borderBottomWidth: 1,
+              borderBottomColor: colors.border,
+            }}
+            activeOpacity={0.7}
+          >
+            <MaterialIcons name={colorScheme === "dark" ? "dark-mode" : "light-mode"} size={20} color={colors.primary} />
+            <Text style={{ fontSize: 14, color: colors.foreground, marginLeft: 12, flex: 1 }}>
+              Theme: {colorScheme === "dark" ? "Dark Mode" : "Light Mode"}
+            </Text>
+            <Switch
+              value={colorScheme === "dark"}
+              onValueChange={(val) => setColorScheme(val ? "dark" : "light")}
+              trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor={Platform.OS === "android" ? (colorScheme === "dark" ? colors.primary : "#f4f3f4") : undefined}
+              style={{ marginRight: 8, transform: Platform.OS === "ios" ? [{ scaleX: 0.8 }, { scaleY: 0.8 }] : undefined }}
+            />
           </TouchableOpacity>
 
           {/* About */}
