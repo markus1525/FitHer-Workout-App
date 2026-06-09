@@ -1,9 +1,9 @@
-import { View, Text, TouchableOpacity, Modal, Platform, StyleSheet } from "react-native";
-import { useEffect, useRef, useState } from "react";
+import { View, Text, TouchableOpacity, Modal, StyleSheet } from "react-native";
+import { useEffect, useState } from "react";
+import { VideoView, useVideoPlayer } from "expo-video";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
-const VIDEO_URL =
-  "https://res.cloudinary.com/dfe3oqabh/video/upload/v1771838555/NOBODY_Believes_In_You_Gym_Motivation_-_Sam_Odenbach_720p_h264_ehu93l.mp4";
+const VIDEO_SOURCE = require("../../assets/video/motivational.MOV");
 
 interface Props {
   visible: boolean;
@@ -13,25 +13,28 @@ interface Props {
 
 export function MotivationVideoModal({ visible, onClose, onDontShowAgain }: Props) {
   const [muted, setMuted] = useState(true);
-  const videoRef = useRef<any>(null);
+
+  const player = useVideoPlayer(VIDEO_SOURCE, (p) => {
+    p.loop = true;
+    p.muted = true;
+  });
 
   useEffect(() => {
-    if (Platform.OS !== "web" || !videoRef.current) return;
     if (visible) {
-      videoRef.current.muted = true;
-      videoRef.current.play().catch(() => {});
+      player.muted = true;
+      player.play();
+      setMuted(true);
     } else {
-      videoRef.current.pause();
-      videoRef.current.currentTime = 0;
+      player.pause();
+      player.muted = true;
       setMuted(true);
     }
   }, [visible]);
 
   const toggleMute = () => {
-    if (Platform.OS === "web" && videoRef.current) {
-      videoRef.current.muted = !muted;
-    }
-    setMuted((m) => !m);
+    const next = !muted;
+    player.muted = next;
+    setMuted(next);
   };
 
   return (
@@ -43,37 +46,24 @@ export function MotivationVideoModal({ visible, onClose, onDontShowAgain }: Prop
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        {/* Full-screen video background (web only) */}
-        {Platform.OS === "web" && (
-          <View style={StyleSheet.absoluteFillObject}>
-            {/* @ts-ignore - web-only HTML video element */}
-            <video
-              ref={videoRef}
-              src={VIDEO_URL}
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-              } as any}
-              autoPlay
-              loop
-              muted
-              playsInline
-              preload="auto"
-            />
-          </View>
-        )}
+        {/* Full-screen video */}
+        <VideoView
+          player={player}
+          style={StyleSheet.absoluteFillObject}
+          contentFit="cover"
+          nativeControls={false}
+        />
 
-        {/* Dark gradient overlay at the bottom so text is readable */}
+        {/* Dark overlay at bottom so text is readable */}
         <View style={styles.bottomOverlay} pointerEvents="none" />
 
-        {/* Mute / unmute button */}
+        {/* Sound toggle */}
         <TouchableOpacity onPress={toggleMute} style={styles.muteBtn} activeOpacity={0.8}>
           <MaterialIcons name={muted ? "volume-off" : "volume-up"} size={18} color="#fff" />
           <Text style={styles.muteBtnText}>{muted ? "Tap for Sound" : "Sound On"}</Text>
         </TouchableOpacity>
 
-        {/* CTA area pinned to bottom */}
+        {/* Bottom CTA */}
         <View style={styles.bottomArea}>
           <Text style={styles.headline}>YOU GOT THIS 💪</Text>
           <Text style={styles.subtitle}>Every rep brings you closer to your goal.</Text>
