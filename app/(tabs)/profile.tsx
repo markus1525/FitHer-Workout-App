@@ -10,15 +10,22 @@ import { useThemeContext } from "@/lib/theme-provider";
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { state, updateProfile, updateSchedule } = useApp();
+  const { state, updateProfile, updateSchedule, resetAllData } = useApp();
   const colors = useColors();
   const { colorScheme, setColorScheme } = useThemeContext();
   const [editing, setEditing] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
 
+  const unitSystem = state.profile?.unitSystem || "metric";
+
   const checkNotificationPermission = async () => {
-    if (Platform.OS === "web") return;
+    if (Platform.OS === "web") {
+      if (typeof window !== "undefined" && "Notification" in window) {
+        setNotificationsEnabled(Notification.permission === "granted");
+      }
+      return;
+    }
     try {
       const Notifications = require("expo-notifications");
       const { status } = await Notifications.getPermissionsAsync();
@@ -45,16 +52,48 @@ export default function ProfileScreen() {
 
   const handleToggleNotifications = async () => {
     if (Platform.OS === "web") {
-      Alert.alert(
-        "Notifications",
-        "To manage notifications in your browser, please update your browser site settings."
-      );
+      if (typeof window !== "undefined" && "Notification" in window) {
+        if (Notification.permission === "granted") {
+          window.alert("To disable notifications, please update your browser site settings for this website.");
+          setNotificationsEnabled(true);
+        } else if (Notification.permission === "denied") {
+          window.alert("Notifications are blocked by your browser. Please enable them in your browser site settings.");
+          setNotificationsEnabled(false);
+        } else {
+          const permission = await Notification.requestPermission();
+          setNotificationsEnabled(permission === "granted");
+        }
+      } else {
+        window.alert("Notifications are not supported by this browser.");
+      }
       return;
     }
     // Direct user to device app settings
     try {
-      await Linking.openSettings();
+      if (Platform.OS === "android" || Platform.OS === "ios") {
+        const Notifications = require("expo-notifications");
+        const { status: existingStatus } = await Notifications.getPermissionsAsync();
+        let finalStatus = existingStatus;
+        if (existingStatus !== "granted") {
+          const { status } = await Notifications.requestPermissionsAsync();
+          finalStatus = status;
+        }
+        if (finalStatus === "granted") {
+          setNotificationsEnabled(true);
+        } else {
+          setNotificationsEnabled(false);
+          Alert.alert(
+            "Notifications Disabled",
+            "Please enable notifications in your device settings to receive daily reminders.",
+            [
+              { text: "Cancel", style: "cancel" },
+              { text: "Settings", onPress: () => Linking.openSettings() }
+            ]
+          );
+        }
+      }
     } catch (error) {
+      console.log("Error handling notifications toggle", error);
       Alert.alert("Error", "Unable to open device settings.");
     }
   };
@@ -81,9 +120,8 @@ export default function ProfileScreen() {
       }
     } else {
       if (Platform.OS === "web") {
-        Alert.alert(
-          "Install FitHer",
-          "To add FitHer to your home screen, tap your browser's menu button (such as the Share button in Safari on iOS, or the menu icon/three dots in Chrome) and select 'Add to Home Screen'."
+        window.alert(
+          "Install FitHer\n\nTo add FitHer to your home screen, tap your browser's menu button (such as the Share button in Safari on iOS, or the menu icon/three dots in Chrome) and select 'Add to Home Screen'."
         );
       } else {
         Alert.alert(
@@ -99,17 +137,27 @@ export default function ProfileScreen() {
   const [weight, setWeight] = useState(String(state.profile?.weight || ""));
   const [showNotifInfo, setShowNotifInfo] = useState(false);
   const [showAboutInfo, setShowAboutInfo] = useState(false);
-  const [unitSystem, setUnitSystem] = useState<"metric" | "imperial">(state.profile?.unitSystem || "metric");
 
   const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   const handleSaveProfile = async () => {
     if (!name.trim()) return;
+    const rawHeight = parseFloat(height);
+    const rawWeight = parseFloat(weight);
+    
+    let heightCm = isNaN(rawHeight) ? 165 : rawHeight;
+    let weightKg = isNaN(rawWeight) ? 60 : rawWeight;
+    
+    if (unitSystem === "imperial") {
+      heightCm = heightCm / 0.393701;
+      weightKg = weightKg / 2.20462;
+    }
+
     await updateProfile({
       name: name.trim(),
       age: parseInt(age) || 25,
-      height: parseFloat(height) || 165,
-      weight: parseFloat(weight) || 60,
+      height: Math.round(heightCm * 10) / 10,
+      weight: Math.round(weightKg * 10) / 10,
       fitnessGoal: state.profile?.fitnessGoal || "stay_active",
       fitnessLevel: state.profile?.fitnessLevel || "beginner",
       unitSystem: unitSystem,
@@ -155,7 +203,6 @@ export default function ProfileScreen() {
 
   const toggleUnit = async () => {
     const newUnit = unitSystem === "metric" ? "imperial" : "metric";
-    setUnitSystem(newUnit);
     if (state.profile) {
       await updateProfile({
         ...state.profile,
@@ -214,15 +261,22 @@ export default function ProfileScreen() {
             <>
               <Text className="text-xl font-bold" style={{ color: colors.foreground }}>{state.profile?.name || "User"}</Text>
               <Text className="text-sm mt-1" style={{ color: colors.muted }}>
-                {state.profile?.age || 0} yrs • {state.profile?.height || 0} cm • {state.profile?.weight || 0} kg
+                {state.profile?.age || 0} yrs • {unitSystem === "imperial" ? `${Math.round((state.profile?.height || 0) * 0.393701 * 10) / 10} in` : `${state.profile?.height || 0} cm`} • {unitSystem === "imperial" ? `${Math.round((state.profile?.weight || 0) * 2.20462 * 10) / 10} lbs` : `${state.profile?.weight || 0} kg`}
               </Text>
               <TouchableOpacity
                 onPress={() => {
                   setEditing(true);
                   setName(state.profile?.name || "");
                   setAge(String(state.profile?.age || ""));
-                  setHeight(String(state.profile?.height || ""));
-                  setWeight(String(state.profile?.weight || ""));
+                  const h = state.profile?.height || 165;
+                  const w = state.profile?.weight || 60;
+                  if (unitSystem === "imperial") {
+                    setHeight(String(Math.round(h * 0.393701 * 10) / 10));
+                    setWeight(String(Math.round(w * 2.20462 * 10) / 10));
+                  } else {
+                    setHeight(String(h));
+                    setWeight(String(w));
+                  }
                 }}
                 style={{
                   marginTop: 12,
@@ -288,7 +342,7 @@ export default function ProfileScreen() {
                   />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 4 }}>Height (cm)</Text>
+                  <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 4 }}>Height ({unitSystem === "imperial" ? "in" : "cm"})</Text>
                   <TextInput
                     value={height}
                     onChangeText={setHeight}
@@ -305,13 +359,13 @@ export default function ProfileScreen() {
                       textAlign: "center",
                       textAlignVertical: "center",
                     }}
-                    placeholder="165"
+                    placeholder={unitSystem === "imperial" ? "65" : "165"}
                     placeholderTextColor={colors.muted}
                     returnKeyType="done"
                   />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 4 }}>Weight (kg)</Text>
+                  <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 4 }}>Weight ({unitSystem === "imperial" ? "lbs" : "kg"})</Text>
                   <TextInput
                     value={weight}
                     onChangeText={setWeight}
@@ -328,7 +382,7 @@ export default function ProfileScreen() {
                       textAlign: "center",
                       textAlignVertical: "center",
                     }}
-                    placeholder="60"
+                    placeholder={unitSystem === "imperial" ? "132" : "60"}
                     placeholderTextColor={colors.muted}
                     returnKeyType="done"
                   />

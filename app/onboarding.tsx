@@ -30,16 +30,29 @@ export default function OnboardingScreen() {
   const [weight, setWeight] = useState("");
   const [goal, setGoal] = useState("");
   const [level, setLevel] = useState("");
+  const [unitSystem, setUnitSystem] = useState<"metric" | "imperial">("metric");
 
   const handleComplete = async () => {
+    const rawHeight = parseFloat(height);
+    const rawWeight = parseFloat(weight);
+    
+    const defaultHeight = unitSystem === "imperial" ? 65 : 165;
+    const defaultWeight = unitSystem === "imperial" ? 132 : 60;
+    
+    const h = isNaN(rawHeight) ? defaultHeight : rawHeight;
+    const w = isNaN(rawWeight) ? defaultWeight : rawWeight;
+
+    const heightCm = unitSystem === "imperial" ? h / 0.393701 : h;
+    const weightKg = unitSystem === "imperial" ? w / 2.20462 : w;
+
     await updateProfile({
       name: name.trim() || "Beautiful",
       age: parseInt(age) || 25,
-      height: parseFloat(height) || 165,
-      weight: parseFloat(weight) || 60,
+      height: heightCm,
+      weight: weightKg,
       fitnessGoal: goal || "stay_active",
       fitnessLevel: level || "beginner",
-      unitSystem: "metric",
+      unitSystem: unitSystem,
     });
     await completeOnboarding();
     router.replace("/");
@@ -128,9 +141,44 @@ export default function OnboardingScreen() {
             <Text style={{ fontSize: 24, fontWeight: "700", color: colors.foreground, marginBottom: 8 }}>
               Your measurements
             </Text>
-            <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 24 }}>
+            <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 16 }}>
               This helps us calculate BMI and recommend workouts.
             </Text>
+
+            {/* Unit Switcher */}
+            <View style={{ flexDirection: "row", backgroundColor: colors.surface, borderRadius: 12, padding: 4, marginBottom: 20, borderWidth: 1, borderColor: colors.border }}>
+              <TouchableOpacity
+                onPress={() => setUnitSystem("metric")}
+                style={{
+                  flex: 1,
+                  paddingVertical: 8,
+                  alignItems: "center",
+                  borderRadius: 10,
+                  backgroundColor: unitSystem === "metric" ? colors.primary : "transparent",
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={{ color: unitSystem === "metric" ? "#FFF" : colors.foreground, fontWeight: "600", fontSize: 13 }}>
+                  Metric (kg/cm)
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setUnitSystem("imperial")}
+                style={{
+                  flex: 1,
+                  paddingVertical: 8,
+                  alignItems: "center",
+                  borderRadius: 10,
+                  backgroundColor: unitSystem === "imperial" ? colors.primary : "transparent",
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={{ color: unitSystem === "imperial" ? "#FFF" : colors.foreground, fontWeight: "600", fontSize: 13 }}>
+                  Imperial (lb/in)
+                </Text>
+              </TouchableOpacity>
+            </View>
+
             <View style={{ gap: 16 }}>
               <View>
                 <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 6 }}>Age</Text>
@@ -156,11 +204,13 @@ export default function OnboardingScreen() {
                 />
               </View>
               <View>
-                <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 6 }}>Height (cm)</Text>
+                <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 6 }}>
+                  Height ({unitSystem === "imperial" ? "inches" : "cm"})
+                </Text>
                 <TextInput
                   value={height}
                   onChangeText={setHeight}
-                  placeholder="165"
+                  placeholder={unitSystem === "imperial" ? "65" : "165"}
                   placeholderTextColor={colors.muted}
                   keyboardType="decimal-pad"
                   style={{
@@ -179,11 +229,13 @@ export default function OnboardingScreen() {
                 />
               </View>
               <View>
-                <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 6 }}>Weight (kg)</Text>
+                <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 6 }}>
+                  Weight ({unitSystem === "imperial" ? "lbs" : "kg"})
+                </Text>
                 <TextInput
                   value={weight}
                   onChangeText={setWeight}
-                  placeholder="60"
+                  placeholder={unitSystem === "imperial" ? "132" : "60"}
                   placeholderTextColor={colors.muted}
                   keyboardType="decimal-pad"
                   style={{

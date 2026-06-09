@@ -198,4 +198,12 @@ export async function addBMIEntry(entry: BMIEntry): Promise<void> {
   return setItem(KEYS.BMI_HISTORY, history.slice(-50));
 }
 
+export async function clearAllData(): Promise<void> {
+  try {
+    await AsyncStorage.clear();
+  } catch (e) {
+    console.error("Error clearing AsyncStorage:", e);
+  }
+}
+
 export { KEYS };

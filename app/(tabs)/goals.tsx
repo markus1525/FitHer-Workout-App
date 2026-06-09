@@ -11,6 +11,8 @@ export default function GoalsScreen() {
   const [editingGoal, setEditingGoal] = useState<string | null>(null);
   const [tempValue, setTempValue] = useState("");
 
+  const unitSystem = state.profile?.unitSystem || "metric";
+
   const weeklyWorkouts = state.history.filter((h) => {
     const d = new Date(h.date);
     const now = new Date();
@@ -34,7 +36,11 @@ export default function GoalsScreen() {
       setEditingGoal(null);
       return;
     }
-    const updated = { ...state.goals, [field]: val };
+    let finalVal = val;
+    if (field === "targetWeight" && unitSystem === "imperial") {
+      finalVal = val / 2.20462;
+    }
+    const updated = { ...state.goals, [field]: Math.round(finalVal * 10) / 10 };
     await updateGoals(updated);
     setEditingGoal(null);
     setTempValue("");
@@ -200,19 +206,30 @@ export default function GoalsScreen() {
                     textAlignVertical: "center",
                   }}
                 />
-                <Text style={{ fontSize: 12, color: colors.muted, marginLeft: 4 }}>kg</Text>
+                <Text style={{ fontSize: 12, color: colors.muted, marginLeft: 4 }}>
+                  {unitSystem === "imperial" ? "lbs" : "kg"}
+                </Text>
                 <TouchableOpacity onPress={() => handleSaveGoal("targetWeight")} style={{ marginLeft: 8 }} activeOpacity={0.7}>
                   <MaterialIcons name="check" size={20} color={colors.success} />
                 </TouchableOpacity>
               </View>
             ) : (
               <TouchableOpacity
-                onPress={() => { setEditingGoal("targetWeight"); setTempValue(String(state.goals.targetWeight || "")); }}
+                onPress={() => {
+                  setEditingGoal("targetWeight");
+                  setTempValue(
+                    state.goals.targetWeight > 0
+                      ? String(unitSystem === "imperial" ? Math.round(state.goals.targetWeight * 2.20462) : state.goals.targetWeight)
+                      : ""
+                  );
+                }}
                 style={{ flexDirection: "row", alignItems: "center" }}
                 activeOpacity={0.7}
               >
                 <Text style={{ fontSize: 14, color: colors.muted }}>
-                  {state.goals.targetWeight > 0 ? `${state.goals.targetWeight} kg` : "Set goal"}
+                  {state.goals.targetWeight > 0
+                    ? `${unitSystem === "imperial" ? Math.round(state.goals.targetWeight * 2.20462) : state.goals.targetWeight} ${unitSystem === "imperial" ? "lbs" : "kg"}`
+                    : "Set goal"}
                 </Text>
                 <MaterialIcons name="edit" size={14} color={colors.muted} style={{ marginLeft: 4 }} />
               </TouchableOpacity>
@@ -221,8 +238,13 @@ export default function GoalsScreen() {
           {state.goals.targetWeight > 0 && state.profile?.weight && (
             <View style={{ marginTop: 8 }}>
               <Text style={{ fontSize: 12, color: colors.muted }}>
-                Current: {state.profile.weight} kg → Target: {state.goals.targetWeight} kg
-                ({state.profile.weight > state.goals.targetWeight ? `-${(state.profile.weight - state.goals.targetWeight).toFixed(1)}` : `+${(state.goals.targetWeight - state.profile.weight).toFixed(1)}`} kg to go)
+                {(() => {
+                  const currentW = unitSystem === "imperial" ? state.profile.weight * 2.20462 : state.profile.weight;
+                  const targetW = unitSystem === "imperial" ? state.goals.targetWeight * 2.20462 : state.goals.targetWeight;
+                  const diff = Math.abs(currentW - targetW);
+                  const label = unitSystem === "imperial" ? "lbs" : "kg";
+                  return `Current: ${Math.round(currentW)} ${label} → Target: ${Math.round(targetW)} ${label} (${currentW > targetW ? `-${diff.toFixed(1)}` : `+${diff.toFixed(1)}`} ${label} to go)`;
+                })()}
               </Text>
             </View>
           )}

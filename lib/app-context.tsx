@@ -24,6 +24,7 @@ import {
   setOnboardingDone,
   getWaterIntake,
   saveWaterIntake,
+  clearAllData,
 } from "./storage";
 import { WorkoutPlan } from "@/data/exercises";
 
@@ -122,6 +123,7 @@ interface AppContextType {
   addWater: () => Promise<void>;
   removeWater: () => Promise<void>;
   refreshData: () => Promise<void>;
+  resetAllData: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -226,6 +228,40 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: "SET_WATER", payload: newCount });
   };
 
+  const resetAllData = async () => {
+    try {
+      await clearAllData();
+      dispatch({ type: "SET_ONBOARDING", payload: false });
+      dispatch({ type: "SET_PROFILE", payload: null });
+      dispatch({ type: "SET_GOALS", payload: {
+        targetWeight: 0,
+        weeklyWorkouts: 4,
+        dailyWater: 8,
+        currentStreak: 0,
+        longestStreak: 0,
+        totalWorkouts: 0,
+        totalCalories: 0,
+        totalMinutes: 0,
+      }});
+      dispatch({ type: "SET_SCHEDULE", payload: {
+        0: { isRestDay: false },
+        1: { isRestDay: false },
+        2: { isRestDay: false },
+        3: { isRestDay: true },
+        4: { isRestDay: false },
+        5: { isRestDay: false },
+        6: { isRestDay: true },
+      }});
+      dispatch({ type: "SET_HISTORY", payload: [] });
+      dispatch({ type: "SET_CYCLE_DATA", payload: [] });
+      dispatch({ type: "SET_BMI_HISTORY", payload: [] });
+      dispatch({ type: "SET_CUSTOM_PLANS", payload: [] });
+      dispatch({ type: "SET_WATER", payload: 0 });
+    } catch (e) {
+      console.error("Error resetting all data:", e);
+    }
+  };
+
   const refreshData = loadData;
 
   return (
@@ -243,6 +279,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         addWater,
         removeWater,
         refreshData,
+        resetAllData,
       }}
     >
       {children}

@@ -18,8 +18,22 @@ export default function BMICalculatorScreen() {
   const { state, addBMI } = useApp();
   const colors = useColors();
 
-  const [height, setHeight] = useState(String(state.profile?.height || ""));
-  const [weight, setWeight] = useState(String(state.profile?.weight || ""));
+  const unitSystem = state.profile?.unitSystem || "metric";
+
+  const initialHeight = state.profile?.height
+    ? (unitSystem === "imperial"
+        ? String(Math.round(state.profile.height * 0.393701))
+        : String(state.profile.height))
+    : "";
+
+  const initialWeight = state.profile?.weight
+    ? (unitSystem === "imperial"
+        ? String(Math.round(state.profile.weight * 2.20462))
+        : String(state.profile.weight))
+    : "";
+
+  const [height, setHeight] = useState(initialHeight);
+  const [weight, setWeight] = useState(initialWeight);
   const [result, setResult] = useState<number | null>(null);
 
   const calculateBMI = () => {
@@ -27,16 +41,29 @@ export default function BMICalculatorScreen() {
     const w = parseFloat(weight);
     if (!h || !w || h <= 0 || w <= 0) return;
 
-    const heightM = h / 100;
-    const bmi = w / (heightM * heightM);
+    let bmi = 0;
+    let weightKg = w;
+    let heightCm = h;
+
+    if (unitSystem === "imperial") {
+      // Imperial formula: 703 * lbs / (in * in)
+      bmi = (703 * w) / (h * h);
+      weightKg = w / 2.20462;
+      heightCm = h / 0.393701;
+    } else {
+      // Metric formula: kg / (m * m)
+      const heightM = h / 100;
+      bmi = w / (heightM * heightM);
+    }
+
     const rounded = Math.round(bmi * 10) / 10;
     setResult(rounded);
 
     addBMI({
       date: new Date().toISOString().split("T")[0],
       bmi: rounded,
-      weight: w,
-      height: h,
+      weight: Math.round(weightKg * 10) / 10,
+      height: Math.round(heightCm * 10) / 10,
     });
   };
 
@@ -59,11 +86,13 @@ export default function BMICalculatorScreen() {
             Body Mass Index (BMI) is a measure of body fat based on height and weight.
           </Text>
           <View style={{ marginBottom: 16 }}>
-            <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 8 }}>Height (cm)</Text>
+            <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 8 }}>
+              Height ({unitSystem === "imperial" ? "inches" : "cm"})
+            </Text>
             <TextInput
               value={height}
               onChangeText={setHeight}
-              placeholder="e.g., 165"
+              placeholder={unitSystem === "imperial" ? "e.g., 65" : "e.g., 165"}
               placeholderTextColor={colors.muted}
               keyboardType="decimal-pad"
               returnKeyType="done"
@@ -82,11 +111,13 @@ export default function BMICalculatorScreen() {
             />
           </View>
           <View style={{ marginBottom: 16 }}>
-            <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 8 }}>Weight (kg)</Text>
+            <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 8 }}>
+              Weight ({unitSystem === "imperial" ? "lbs" : "kg"})
+            </Text>
             <TextInput
               value={weight}
               onChangeText={setWeight}
-              placeholder="e.g., 60"
+              placeholder={unitSystem === "imperial" ? "e.g., 132" : "e.g., 60"}
               placeholderTextColor={colors.muted}
               keyboardType="decimal-pad"
               returnKeyType="done"
@@ -150,7 +181,11 @@ export default function BMICalculatorScreen() {
               return (
                 <View key={idx} style={{ flexDirection: "row", alignItems: "center", paddingVertical: 8, borderBottomWidth: idx < state.bmiHistory.length - 1 ? 1 : 0, borderBottomColor: colors.border }}>
                   <Text style={{ fontSize: 12, color: colors.muted, flex: 1 }}>{entry.date}</Text>
-                  <Text style={{ fontSize: 12, color: colors.muted, marginRight: 12 }}>{entry.weight} kg</Text>
+                  <Text style={{ fontSize: 12, color: colors.muted, marginRight: 12 }}>
+                    {unitSystem === "imperial"
+                      ? `${Math.round(entry.weight * 2.20462)} lbs`
+                      : `${entry.weight} kg`}
+                  </Text>
                   <Text style={{ color: cat.color, fontSize: 14, fontWeight: "700" }}>{entry.bmi}</Text>
                 </View>
               );
