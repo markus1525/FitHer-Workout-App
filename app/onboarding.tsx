@@ -1,11 +1,14 @@
 import { Text, View, TouchableOpacity, TextInput, ScrollView } from "react-native";
 import { useState } from "react";
 import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/screen-container";
 import { useApp } from "@/lib/app-context";
 import { useColors } from "@/hooks/use-colors";
 import { ftInToCm } from "@/lib/utils";
+import { MotivationVideoModal } from "@/components/ui/motivation-video-modal";
+import { videoSession } from "@/lib/video-session";
 
 const FITNESS_GOALS = [
   { id: "lose_weight", label: "Lose Weight", icon: "🔥", desc: "Burn fat and slim down" },
@@ -25,6 +28,7 @@ export default function OnboardingScreen() {
   const { updateProfile, completeOnboarding } = useApp();
   const colors = useColors();
   const [step, setStep] = useState(0);
+  const [showVideo, setShowVideo] = useState(false);
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
   // Metric uses heightCm; imperial uses heightFt + heightIn
@@ -61,7 +65,15 @@ export default function OnboardingScreen() {
       unitSystem: unitSystem,
     });
     await completeOnboarding();
-    router.replace("/");
+
+    // Show motivation video before going to home (if enabled)
+    const videoEnabled = await AsyncStorage.getItem("fither_welcome_video_enabled");
+    if (videoEnabled !== "false") {
+      videoSession.markShown();
+      setShowVideo(true);
+    } else {
+      router.replace("/");
+    }
   };
 
   const canProceed = () => {
@@ -79,8 +91,24 @@ export default function OnboardingScreen() {
     }
   };
 
+  const handleVideoClose = () => {
+    setShowVideo(false);
+    router.replace("/");
+  };
+
+  const handleDontShowAgain = async () => {
+    await AsyncStorage.setItem("fither_welcome_video_enabled", "false");
+    setShowVideo(false);
+    router.replace("/");
+  };
+
   return (
     <ScreenContainer edges={["top", "bottom", "left", "right"]} className="px-6">
+      <MotivationVideoModal
+        visible={showVideo}
+        onClose={handleVideoClose}
+        onDontShowAgain={handleDontShowAgain}
+      />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
         {/* Progress */}
         <View style={{ flexDirection: "row", gap: 6, marginTop: 16, marginBottom: 32 }}>

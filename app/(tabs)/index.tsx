@@ -1,6 +1,6 @@
 import { ScrollView, Text, View, TouchableOpacity, Platform } from "react-native";
 import { useRouter } from "expo-router";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ScreenContainer } from "@/components/screen-container";
@@ -8,6 +8,7 @@ import { useApp } from "@/lib/app-context";
 import { MOTIVATIONAL_QUOTES, DEFAULT_WORKOUT_PLANS, CYCLE_PHASES } from "@/data/exercises";
 import { useColors } from "@/hooks/use-colors";
 import { MotivationVideoModal } from "@/components/ui/motivation-video-modal";
+import { videoSession } from "@/lib/video-session";
 
 function getCyclePhase(cycleData: any[]): string | null {
   if (!cycleData || cycleData.length === 0) return null;
@@ -32,7 +33,6 @@ export default function HomeScreen() {
   const [quote, setQuote] = useState("");
   const [reminderDismissed, setReminderDismissed] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
-  const hasShownVideoRef = useRef(false);
 
   const today = new Date().toISOString().split("T")[0];
   const REMINDER_KEY = `fither_reminder_dismissed_${today}`;
@@ -60,10 +60,12 @@ export default function HomeScreen() {
   }, [state.isLoading, state.onboardingDone]);
 
   useEffect(() => {
-    if (!state.isLoading && state.onboardingDone && !hasShownVideoRef.current) {
+    // Only show on subsequent opens — first-time is handled by onboarding.tsx.
+    // videoSession.shown is false on every fresh app open, true once shown this session.
+    if (!state.isLoading && state.onboardingDone && !videoSession.shown) {
       AsyncStorage.getItem("fither_welcome_video_enabled").then((val) => {
         if (val !== "false") {
-          hasShownVideoRef.current = true;
+          videoSession.markShown();
           setShowVideo(true);
         }
       });
