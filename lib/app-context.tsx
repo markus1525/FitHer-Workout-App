@@ -25,6 +25,8 @@ import {
   getWaterIntake,
   saveWaterIntake,
   clearAllData,
+  getFavoritePlans,
+  saveFavoritePlans,
 } from "./storage";
 import { WorkoutPlan } from "@/data/exercises";
 
@@ -39,6 +41,7 @@ interface AppState {
   bmiHistory: BMIEntry[];
   customPlans: WorkoutPlan[];
   todayWater: number;
+  favorites: string[];
 }
 
 type AppAction =
@@ -51,7 +54,8 @@ type AppAction =
   | { type: "SET_CYCLE_DATA"; payload: CycleEntry[] }
   | { type: "SET_BMI_HISTORY"; payload: BMIEntry[] }
   | { type: "SET_CUSTOM_PLANS"; payload: WorkoutPlan[] }
-  | { type: "SET_WATER"; payload: number };
+  | { type: "SET_WATER"; payload: number }
+  | { type: "SET_FAVORITES"; payload: string[] };
 
 const initialState: AppState = {
   isLoading: true,
@@ -81,6 +85,7 @@ const initialState: AppState = {
   bmiHistory: [],
   customPlans: [],
   todayWater: 0,
+  favorites: [],
 };
 
 function appReducer(state: AppState, action: AppAction): AppState {
@@ -105,6 +110,8 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, customPlans: action.payload };
     case "SET_WATER":
       return { ...state, todayWater: action.payload };
+    case "SET_FAVORITES":
+      return { ...state, favorites: action.payload };
     default:
       return state;
   }
@@ -124,6 +131,7 @@ interface AppContextType {
   removeWater: () => Promise<void>;
   refreshData: () => Promise<void>;
   resetAllData: () => Promise<void>;
+  toggleFavoritePlan: (planId: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -135,7 +143,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const loadData = useCallback(async () => {
     try {
-      const [onboarded, profile, goals, schedule, history, cycleData, bmiHistory, customPlans, water] = await Promise.all([
+      const [onboarded, profile, goals, schedule, history, cycleData, bmiHistory, customPlans, water, favorites] = await Promise.all([
         isOnboardingDone(),
         getUserProfile(),
         getGoals(),
@@ -145,6 +153,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         getBMIHistory(),
         getCustomPlans(),
         getWaterIntake(today),
+        getFavoritePlans(),
       ]);
 
       dispatch({ type: "SET_ONBOARDING", payload: onboarded });
@@ -156,6 +165,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       dispatch({ type: "SET_BMI_HISTORY", payload: bmiHistory });
       dispatch({ type: "SET_CUSTOM_PLANS", payload: customPlans as WorkoutPlan[] });
       dispatch({ type: "SET_WATER", payload: water });
+      dispatch({ type: "SET_FAVORITES", payload: favorites });
     } catch (e) {
       console.error("Error loading data:", e);
     } finally {
@@ -257,9 +267,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       dispatch({ type: "SET_BMI_HISTORY", payload: [] });
       dispatch({ type: "SET_CUSTOM_PLANS", payload: [] });
       dispatch({ type: "SET_WATER", payload: 0 });
+      dispatch({ type: "SET_FAVORITES", payload: [] });
     } catch (e) {
       console.error("Error resetting all data:", e);
     }
+  };
+
+  const toggleFavoritePlan = async (planId: string) => {
+    const next = state.favorites.includes(planId)
+      ? state.favorites.filter((id) => id !== planId)
+      : [...state.favorites, planId];
+    await saveFavoritePlans(next);
+    dispatch({ type: "SET_FAVORITES", payload: next });
   };
 
   const refreshData = loadData;
@@ -280,6 +299,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         removeWater,
         refreshData,
         resetAllData,
+        toggleFavoritePlan,
       }}
     >
       {children}

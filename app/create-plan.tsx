@@ -18,9 +18,17 @@ export default function CreatePlanScreen() {
   const [selectedExercises, setSelectedExercises] = useState<string[]>([]);
   const [filterBodyPart, setFilterBodyPart] = useState("All");
 
+  const workoutsMode = state.profile?.workoutsMode || "both";
+
+  const modeFilteredExercises = EXERCISES.filter((e) => {
+    const exerciseMode = e.mode || "home";
+    if (workoutsMode === "both") return true;
+    return exerciseMode === workoutsMode;
+  });
+
   const filteredExercises = filterBodyPart === "All"
-    ? EXERCISES
-    : EXERCISES.filter((e) => e.bodyPart === filterBodyPart);
+    ? modeFilteredExercises
+    : modeFilteredExercises.filter((e) => e.bodyPart === filterBodyPart);
 
   const toggleExercise = (id: string) => {
     setSelectedExercises((prev) =>

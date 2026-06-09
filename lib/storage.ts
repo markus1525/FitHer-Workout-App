@@ -10,6 +10,7 @@ const KEYS = {
   WATER_INTAKE: "fither_water",
   BMI_HISTORY: "fither_bmi",
   ONBOARDING_DONE: "fither_onboarded",
+  FAVORITE_PLANS: "fither_favorite_plans",
 };
 
 export interface UserProfile {
@@ -20,6 +21,7 @@ export interface UserProfile {
   fitnessGoal: string;
   fitnessLevel: string;
   unitSystem: "metric" | "imperial";
+  workoutsMode?: "home" | "gym" | "both";
   profileImage?: string; // local URI for profile picture
 }
 
@@ -196,6 +198,14 @@ export async function addBMIEntry(entry: BMIEntry): Promise<void> {
   const history = await getBMIHistory();
   history.push(entry);
   return setItem(KEYS.BMI_HISTORY, history.slice(-50));
+}
+
+export async function getFavoritePlans(): Promise<string[]> {
+  return (await getItem<string[]>(KEYS.FAVORITE_PLANS)) || [];
+}
+
+export async function saveFavoritePlans(ids: string[]): Promise<void> {
+  return setItem(KEYS.FAVORITE_PLANS, ids);
 }
 
 export async function clearAllData(): Promise<void> {

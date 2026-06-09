@@ -19,6 +19,7 @@ export default function ProfileScreen() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   const unitSystem = state.profile?.unitSystem || "metric";
+  const workoutsMode = state.profile?.workoutsMode || "both";
 
   useEffect(() => {
     if (Platform.OS === "web") {
@@ -208,6 +209,7 @@ export default function ProfileScreen() {
     }
 
     await updateProfile({
+      ...state.profile,
       name: name.trim(),
       age: parseInt(age) || 25,
       height: Math.round(finalHeightCm * 10) / 10,
@@ -238,6 +240,7 @@ export default function ProfileScreen() {
       if (!result.canceled && result.assets[0]) {
         const imageUri = result.assets[0].uri;
         await updateProfile({
+          ...state.profile,
           name: state.profile?.name || "User",
           age: state.profile?.age || 25,
           height: state.profile?.height || 165,
@@ -286,6 +289,14 @@ export default function ProfileScreen() {
     if (state.profile) {
       await updateProfile({ ...state.profile, unitSystem: newUnit });
     }
+  };
+
+  const toggleWorkoutsMode = async () => {
+    if (!state.profile) return;
+    const currentMode = state.profile.workoutsMode || "both";
+    const nextMode: "both" | "home" | "gym" =
+      currentMode === "both" ? "home" : currentMode === "home" ? "gym" : "both";
+    await updateProfile({ ...state.profile, workoutsMode: nextMode });
   };
 
   const handleReset = () => {
@@ -721,6 +732,28 @@ export default function ProfileScreen() {
               style={{ transform: Platform.OS === "ios" ? [{ scaleX: 0.8 }, { scaleY: 0.8 }] : undefined }}
             />
           </View>
+
+          {/* Workouts Mode */}
+          <TouchableOpacity
+            onPress={toggleWorkoutsMode}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              padding: 16,
+              borderBottomWidth: 1,
+              borderBottomColor: colors.border,
+            }}
+            activeOpacity={0.7}
+          >
+            <MaterialIcons name="fitness-center" size={20} color={colors.primary} />
+            <Text style={{ fontSize: 14, color: colors.foreground, marginLeft: 12, flex: 1 }}>
+              Workouts Mode: {
+                workoutsMode === "both" ? "Both (Home & Gym)" :
+                workoutsMode === "home" ? "Home Workouts Only" : "Gym Workouts Only"
+              }
+            </Text>
+            <MaterialIcons name="swap-horiz" size={20} color={colors.muted} />
+          </TouchableOpacity>
 
           {/* Units */}
           <TouchableOpacity
