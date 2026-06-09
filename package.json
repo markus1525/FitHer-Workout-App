@@ -18,7 +18,7 @@
     "ios": "expo start --ios",
     "qr": "node scripts/generate_qr.mjs",
     "export": "npx expo export --platform web",
-    "deploy": "gh-pages -d dist"
+    "deploy": "gh-pages -d dist --nojekyll --dotfiles"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
