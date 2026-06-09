@@ -168,7 +168,7 @@ export default function ProfileScreen() {
         <Text className="text-2xl font-bold text-foreground mb-4">Profile</Text>
 
         {/* Profile Card */}
-        <View className="bg-surface rounded-2xl p-5 mb-4 items-center">
+        <View className="rounded-2xl p-5 mb-4 items-center" style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
           {/* Profile Picture */}
           <TouchableOpacity
             onPress={pickProfileImage}
@@ -390,7 +390,7 @@ export default function ProfileScreen() {
         </TouchableOpacity>
 
         {/* Workout Schedule */}
-        <View className="bg-surface rounded-2xl p-4 mb-4">
+        <View className="rounded-2xl p-4 mb-4" style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
           <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 8 }}>Workout Schedule</Text>
           <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 12 }}>Tap to toggle rest days</Text>
           <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
