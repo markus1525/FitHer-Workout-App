@@ -8,23 +8,37 @@ import { OpaqueColorValue, type StyleProp, type TextStyle } from "react-native";
 type IconMapping = Record<SymbolViewProps["name"], ComponentProps<typeof MaterialIcons>["name"]>;
 type IconSymbolName = keyof typeof MAPPING;
 
-/**
- * Add your SF Symbols to Material Icons mappings here.
- * - see Material Icons in the [Icons Directory](https://icons.expo.fyi).
- * - see SF Symbols in the [SF Symbols](https://developer.apple.com/sf-symbols/) app.
- */
 const MAPPING = {
   "house.fill": "home",
+  "figure.run": "fitness-center",
+  "target": "track-changes",
+  "drop.fill": "water-drop",
+  "person.fill": "person",
+  "calendar": "event",
+  "chevron.right": "chevron-right",
+  "chevron.left": "chevron-left",
+  "plus": "add",
+  "play.fill": "play-arrow",
+  "pause.fill": "pause",
+  "xmark": "close",
+  "checkmark": "check",
+  "heart.fill": "favorite",
+  "star.fill": "star",
+  "flame.fill": "local-fire-department",
+  "bolt.fill": "bolt",
+  "moon.fill": "nightlight",
+  "sun.max.fill": "wb-sunny",
+  "bell.fill": "notifications",
+  "gearshape.fill": "settings",
+  "pencil": "edit",
+  "trash.fill": "delete",
+  "arrow.left": "arrow-back",
+  "clock.fill": "schedule",
+  "chart.bar.fill": "bar-chart",
   "paperplane.fill": "send",
   "chevron.left.forwardslash.chevron.right": "code",
-  "chevron.right": "chevron-right",
 } as IconMapping;
 
-/**
- * An icon component that uses native SF Symbols on iOS, and Material Icons on Android and web.
- * This ensures a consistent look across platforms, and optimal resource usage.
- * Icon `name`s are based on SF Symbols and require manual mapping to Material Icons.
- */
 export function IconSymbol({
   name,
   size = 24,

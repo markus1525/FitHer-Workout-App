@@ -1,0 +1,24 @@
+# Project TODO
+
+- [x] Configure app theme (pink/purple feminine palette)
+- [x] Set up tab navigation (Home, Workouts, Goals, Cycle, Profile)
+- [x] Add icon mappings for all tabs
+- [x] Build onboarding flow (name, age, height, weight, goal, level)
+- [x] Build Home screen with greeting, stats, today's workout
+- [x] Build BMI Calculator with history
+- [x] Build Target Goal setting and tracking
+- [x] Build default suggested workout plans (Beginner, Intermediate, Advanced)
+- [x] Build custom workout plan creation
+- [x] Build workout/rest day customization calendar
+- [x] Add YouTube video preview for exercises
+- [x] Build exercise player with timer and progress
+- [x] Build menstrual cycle tracker with phase predictions
+- [x] Build cycle-based workout recommendations
+- [x] Build water intake tracker
+- [x] Add daily motivational quotes
+- [x] Build profile/settings screen
+- [x] Add "Developed by Markus with love" branding
+- [x] Generate app logo and configure branding
+- [x] Ensure responsive design for all devices
+- [x] Double-check errors and alignment issues
+- [x] Push to GitHub repository
