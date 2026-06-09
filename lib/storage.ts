@@ -20,6 +20,7 @@ export interface UserProfile {
   fitnessGoal: string;
   fitnessLevel: string;
   unitSystem: "metric" | "imperial";
+  profileImage?: string; // local URI for profile picture
 }
 
 export interface WorkoutSchedule {

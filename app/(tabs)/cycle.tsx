@@ -55,40 +55,39 @@ export default function CycleScreen() {
   return (
     <ScreenContainer className="px-4 pt-2">
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
-        <Text className="text-2xl font-bold text-foreground mb-4">Cycle Tracker</Text>
+        <Text style={{ fontSize: 24, fontWeight: "700", color: colors.foreground, marginBottom: 16 }}>Cycle Tracker</Text>
 
         {/* Current Phase Card */}
         {currentPhase && cycleInfo ? (
-          <View style={{ backgroundColor: currentPhase.color + "15", borderColor: currentPhase.color, borderWidth: 1 }} className="rounded-2xl p-5 mb-4">
-            <View className="items-center">
-              <Text className="text-4xl mb-2">{currentPhase.icon}</Text>
-              <Text style={{ color: currentPhase.color }} className="text-xl font-bold">{currentPhase.name} Phase</Text>
-              <Text className="text-sm text-muted mt-1">Day {cycleInfo.dayInCycle + 1} of {cycleInfo.cycleLength}</Text>
-              <View className="flex-row items-center mt-3 gap-4">
-                <View className="items-center">
-                  <Text className="text-lg font-bold text-foreground">{cycleInfo.daysUntilNext}</Text>
-                  <Text className="text-xs text-muted">Days until next</Text>
+          <View style={{ backgroundColor: currentPhase.color + "15", borderColor: currentPhase.color, borderWidth: 1, borderRadius: 16, padding: 20, marginBottom: 16 }}>
+            <View style={{ alignItems: "center" }}>
+              <Text style={{ fontSize: 40 }}>{currentPhase.icon}</Text>
+              <Text style={{ color: currentPhase.color, fontSize: 20, fontWeight: "700", marginTop: 8 }}>{currentPhase.name} Phase</Text>
+              <Text style={{ fontSize: 14, color: colors.muted, marginTop: 4 }}>Day {cycleInfo.dayInCycle + 1} of {cycleInfo.cycleLength}</Text>
+              <View style={{ flexDirection: "row", alignItems: "center", marginTop: 12, gap: 16 }}>
+                <View style={{ alignItems: "center" }}>
+                  <Text style={{ fontSize: 18, fontWeight: "700", color: colors.foreground }}>{cycleInfo.daysUntilNext}</Text>
+                  <Text style={{ fontSize: 11, color: colors.muted }}>Days until next</Text>
                 </View>
-                <View className="w-px h-8 bg-border" />
-                <View className="items-center">
-                  <Text className="text-lg font-bold text-foreground">{cycleInfo.periodLength}</Text>
-                  <Text className="text-xs text-muted">Period days</Text>
+                <View style={{ width: 1, height: 32, backgroundColor: colors.border }} />
+                <View style={{ alignItems: "center" }}>
+                  <Text style={{ fontSize: 18, fontWeight: "700", color: colors.foreground }}>{cycleInfo.periodLength}</Text>
+                  <Text style={{ fontSize: 11, color: colors.muted }}>Period days</Text>
                 </View>
               </View>
             </View>
             {/* Progress bar */}
-            <View className="h-2 bg-white/30 rounded-full mt-4 overflow-hidden">
+            <View style={{ height: 8, backgroundColor: "rgba(255,255,255,0.3)", borderRadius: 4, marginTop: 16, overflow: "hidden" }}>
               <View
-                style={{ width: `${((cycleInfo.dayInCycle + 1) / cycleInfo.cycleLength) * 100}%`, backgroundColor: currentPhase.color }}
-                className="h-full rounded-full"
+                style={{ width: `${((cycleInfo.dayInCycle + 1) / cycleInfo.cycleLength) * 100}%`, backgroundColor: currentPhase.color, height: "100%", borderRadius: 4 }}
               />
             </View>
           </View>
         ) : (
-          <View className="bg-surface rounded-2xl p-6 mb-4 items-center">
-            <Text className="text-4xl mb-2">🌸</Text>
-            <Text className="text-base font-semibold text-foreground">Start Tracking Your Cycle</Text>
-            <Text className="text-sm text-muted text-center mt-1">
+          <View style={{ backgroundColor: colors.surface, borderRadius: 16, padding: 24, marginBottom: 16, alignItems: "center" }}>
+            <Text style={{ fontSize: 40 }}>🌸</Text>
+            <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginTop: 8 }}>Start Tracking Your Cycle</Text>
+            <Text style={{ fontSize: 14, color: colors.muted, textAlign: "center", marginTop: 4 }}>
               Log your period to get personalized workout recommendations.
             </Text>
           </View>
@@ -97,56 +96,82 @@ export default function CycleScreen() {
         {/* Log Period Button */}
         <TouchableOpacity
           onPress={() => setShowLogForm(!showLogForm)}
-          className="bg-primary rounded-xl p-3 items-center mb-4"
+          style={{ backgroundColor: colors.primary, borderRadius: 12, padding: 14, alignItems: "center", marginBottom: 16 }}
           activeOpacity={0.7}
         >
-          <Text className="text-white font-semibold">
+          <Text style={{ color: "#FFF", fontWeight: "600", fontSize: 15 }}>
             {showLogForm ? "Cancel" : "Log Period Start"}
           </Text>
         </TouchableOpacity>
 
         {/* Log Form */}
         {showLogForm && (
-          <View className="bg-surface rounded-2xl p-4 mb-4 border border-border">
-            <Text className="text-sm font-semibold text-foreground mb-3">Log New Period</Text>
-            <View className="flex-row items-center mb-3">
-              <Text className="text-sm text-muted flex-1">Period Length (days)</Text>
+          <View style={{ backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: colors.border }}>
+            <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 12 }}>Log New Period</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
+              <Text style={{ fontSize: 14, color: colors.muted, flex: 1 }}>Period Length (days)</Text>
               <TextInput
                 value={periodLength}
                 onChangeText={setPeriodLength}
                 keyboardType="number-pad"
-                className="bg-background border border-border rounded-lg px-3 py-2 w-16 text-center text-foreground"
+                returnKeyType="done"
+                style={{
+                  backgroundColor: colors.background,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  borderRadius: 8,
+                  paddingHorizontal: 12,
+                  paddingVertical: 10,
+                  width: 64,
+                  textAlign: "center",
+                  fontSize: 15,
+                  color: colors.foreground,
+                  textAlignVertical: "center",
+                }}
               />
             </View>
-            <View className="flex-row items-center mb-4">
-              <Text className="text-sm text-muted flex-1">Cycle Length (days)</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 16 }}>
+              <Text style={{ fontSize: 14, color: colors.muted, flex: 1 }}>Cycle Length (days)</Text>
               <TextInput
                 value={cycleLength}
                 onChangeText={setCycleLength}
                 keyboardType="number-pad"
-                className="bg-background border border-border rounded-lg px-3 py-2 w-16 text-center text-foreground"
+                returnKeyType="done"
+                style={{
+                  backgroundColor: colors.background,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  borderRadius: 8,
+                  paddingHorizontal: 12,
+                  paddingVertical: 10,
+                  width: 64,
+                  textAlign: "center",
+                  fontSize: 15,
+                  color: colors.foreground,
+                  textAlignVertical: "center",
+                }}
               />
             </View>
             <TouchableOpacity
               onPress={handleLogPeriod}
-              className="bg-primary rounded-xl p-3 items-center"
+              style={{ backgroundColor: colors.primary, borderRadius: 12, padding: 14, alignItems: "center" }}
               activeOpacity={0.7}
             >
-              <Text className="text-white font-semibold">Save</Text>
+              <Text style={{ color: "#FFF", fontWeight: "600" }}>Save</Text>
             </TouchableOpacity>
           </View>
         )}
 
         {/* Workout Tips for Current Phase */}
         {currentPhase && (
-          <View className="bg-surface rounded-2xl p-4 mb-4">
-            <Text className="text-sm font-semibold text-foreground mb-2">
-              💡 Workout Tips for {currentPhase.name} Phase
+          <View style={{ backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 16 }}>
+            <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 8 }}>
+              Workout Tips for {currentPhase.name} Phase
             </Text>
-            <Text className="text-sm text-muted leading-5">{currentPhase.tips}</Text>
+            <Text style={{ fontSize: 14, color: colors.muted, lineHeight: 20 }}>{currentPhase.tips}</Text>
             {currentPhase.recommendedExercises.length > 0 && (
-              <View className="mt-3">
-                <Text className="text-xs font-semibold text-foreground mb-2">Recommended Workouts:</Text>
+              <View style={{ marginTop: 12 }}>
+                <Text style={{ fontSize: 12, fontWeight: "600", color: colors.foreground, marginBottom: 8 }}>Recommended Workouts:</Text>
                 {currentPhase.recommendedExercises.map((planId) => {
                   const plan = DEFAULT_WORKOUT_PLANS.find((p) => p.id === planId);
                   if (!plan) return null;
@@ -154,11 +179,11 @@ export default function CycleScreen() {
                     <TouchableOpacity
                       key={planId}
                       onPress={() => router.push({ pathname: "/workout-detail" as any, params: { planId } })}
-                      className="flex-row items-center py-2 border-b border-border"
+                      style={{ flexDirection: "row", alignItems: "center", paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border }}
                       activeOpacity={0.7}
                     >
-                      <Text className="flex-1 text-sm text-foreground">{plan.name}</Text>
-                      <Text className="text-xs text-muted mr-2">{plan.duration} min</Text>
+                      <Text style={{ flex: 1, fontSize: 14, color: colors.foreground }}>{plan.name}</Text>
+                      <Text style={{ fontSize: 12, color: colors.muted, marginRight: 8 }}>{plan.duration} min</Text>
                       <MaterialIcons name="chevron-right" size={16} color={colors.muted} />
                     </TouchableOpacity>
                   );
@@ -169,27 +194,27 @@ export default function CycleScreen() {
         )}
 
         {/* Phase Guide */}
-        <Text className="text-base font-semibold text-foreground mb-3">Cycle Phases Guide</Text>
+        <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginBottom: 12 }}>Cycle Phases Guide</Text>
         {phases.map(([key, phase]) => (
-          <View key={key} className="bg-surface rounded-xl p-3 mb-2 flex-row items-center border border-border">
-            <Text className="text-2xl mr-3">{phase.icon}</Text>
-            <View className="flex-1">
-              <Text style={{ color: phase.color }} className="text-sm font-semibold">{phase.name}</Text>
-              <Text className="text-xs text-muted mt-0.5">{phase.description}</Text>
+          <View key={key} style={{ backgroundColor: colors.surface, borderRadius: 12, padding: 12, marginBottom: 8, flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: colors.border }}>
+            <Text style={{ fontSize: 24, marginRight: 12 }}>{phase.icon}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: phase.color, fontSize: 14, fontWeight: "600" }}>{phase.name}</Text>
+              <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>{phase.description}</Text>
             </View>
           </View>
         ))}
 
         {/* Cycle History */}
         {state.cycleData.length > 0 && (
-          <View className="mt-4">
-            <Text className="text-base font-semibold text-foreground mb-3">Cycle History</Text>
+          <View style={{ marginTop: 16 }}>
+            <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginBottom: 12 }}>Cycle History</Text>
             {state.cycleData.slice(-5).reverse().map((entry, idx) => (
-              <View key={idx} className="bg-surface rounded-xl p-3 mb-2 flex-row items-center">
+              <View key={idx} style={{ backgroundColor: colors.surface, borderRadius: 12, padding: 12, marginBottom: 8, flexDirection: "row", alignItems: "center" }}>
                 <MaterialIcons name="event" size={20} color={colors.primary} />
-                <View className="ml-3 flex-1">
-                  <Text className="text-sm text-foreground">Started: {entry.startDate}</Text>
-                  <Text className="text-xs text-muted">Period: {entry.periodLength} days • Cycle: {entry.cycleLength} days</Text>
+                <View style={{ marginLeft: 12, flex: 1 }}>
+                  <Text style={{ fontSize: 14, color: colors.foreground }}>Started: {entry.startDate}</Text>
+                  <Text style={{ fontSize: 12, color: colors.muted }}>Period: {entry.periodLength} days • Cycle: {entry.cycleLength} days</Text>
                 </View>
               </View>
             ))}

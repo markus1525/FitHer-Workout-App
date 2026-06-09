@@ -28,24 +28,31 @@ export default function WorkoutsScreen() {
   const renderPlanCard = ({ item }: { item: WorkoutPlan }) => (
     <TouchableOpacity
       onPress={() => router.push({ pathname: "/workout-detail" as any, params: { planId: item.id, isCustom: activeTab === "custom" ? "1" : "0" } })}
-      className="bg-surface rounded-2xl p-4 mb-3 border border-border"
+      style={{
+        backgroundColor: colors.surface,
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 10,
+        borderWidth: 1,
+        borderColor: colors.border,
+      }}
       activeOpacity={0.7}
     >
-      <View className="flex-row items-center justify-between">
-        <View className="flex-1">
-          <Text className="text-base font-bold text-foreground">{item.name}</Text>
-          <Text className="text-xs text-muted mt-1" numberOfLines={2}>{item.description}</Text>
-          <View className="flex-row items-center mt-2 gap-3">
-            <View className="flex-row items-center">
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 15, fontWeight: "700", color: colors.foreground }}>{item.name}</Text>
+          <Text style={{ fontSize: 12, color: colors.muted, marginTop: 4 }} numberOfLines={2}>{item.description}</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", marginTop: 8, gap: 12 }}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
               <MaterialIcons name="schedule" size={14} color={colors.muted} />
-              <Text className="text-xs text-muted ml-1">{item.duration} min</Text>
+              <Text style={{ fontSize: 11, color: colors.muted, marginLeft: 4 }}>{item.duration} min</Text>
             </View>
-            <View className="flex-row items-center">
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
               <MaterialIcons name="fitness-center" size={14} color={colors.muted} />
-              <Text className="text-xs text-muted ml-1">{item.exercises.length} exercises</Text>
+              <Text style={{ fontSize: 11, color: colors.muted, marginLeft: 4 }}>{item.exercises.length} exercises</Text>
             </View>
-            <View style={{ backgroundColor: getDifficultyColor(item.difficulty) + "20" }} className="px-2 py-0.5 rounded-full">
-              <Text style={{ color: getDifficultyColor(item.difficulty) }} className="text-xs font-semibold capitalize">
+            <View style={{ backgroundColor: getDifficultyColor(item.difficulty) + "20", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 }}>
+              <Text style={{ color: getDifficultyColor(item.difficulty), fontSize: 10, fontWeight: "600", textTransform: "capitalize" }}>
                 {item.difficulty}
               </Text>
             </View>
@@ -59,51 +66,77 @@ export default function WorkoutsScreen() {
   return (
     <ScreenContainer className="px-4 pt-2">
       {/* Header */}
-      <View className="flex-row items-center justify-between mb-4">
-        <Text className="text-2xl font-bold text-foreground">Workouts</Text>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+        <Text style={{ fontSize: 24, fontWeight: "700", color: colors.foreground }}>Workouts</Text>
         <TouchableOpacity
           onPress={() => router.push("/create-plan" as any)}
-          className="bg-primary rounded-full px-4 py-2 flex-row items-center"
+          style={{
+            backgroundColor: colors.primary,
+            borderRadius: 20,
+            paddingHorizontal: 14,
+            paddingVertical: 8,
+            flexDirection: "row",
+            alignItems: "center",
+          }}
           activeOpacity={0.7}
         >
-          <MaterialIcons name="add" size={18} color="#FFF" />
-          <Text className="text-white font-semibold text-sm ml-1">Create</Text>
+          <MaterialIcons name="add" size={16} color="#FFF" />
+          <Text style={{ color: "#FFF", fontWeight: "600", fontSize: 13, marginLeft: 4 }}>Create</Text>
         </TouchableOpacity>
       </View>
 
       {/* Tab Toggle */}
-      <View className="flex-row bg-surface rounded-xl p-1 mb-4">
+      <View style={{ flexDirection: "row", backgroundColor: colors.surface, borderRadius: 12, padding: 4, marginBottom: 16 }}>
         <TouchableOpacity
           onPress={() => setActiveTab("default")}
-          className={`flex-1 py-2 rounded-lg items-center ${activeTab === "default" ? "bg-primary" : ""}`}
+          style={{
+            flex: 1,
+            paddingVertical: 10,
+            borderRadius: 8,
+            alignItems: "center",
+            backgroundColor: activeTab === "default" ? colors.primary : "transparent",
+          }}
           activeOpacity={0.7}
         >
-          <Text className={`font-semibold text-sm ${activeTab === "default" ? "text-white" : "text-muted"}`}>
+          <Text style={{ fontWeight: "600", fontSize: 14, color: activeTab === "default" ? "#FFF" : colors.muted }}>
             Suggested Plans
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => setActiveTab("custom")}
-          className={`flex-1 py-2 rounded-lg items-center ${activeTab === "custom" ? "bg-primary" : ""}`}
+          style={{
+            flex: 1,
+            paddingVertical: 10,
+            borderRadius: 8,
+            alignItems: "center",
+            backgroundColor: activeTab === "custom" ? colors.primary : "transparent",
+          }}
           activeOpacity={0.7}
         >
-          <Text className={`font-semibold text-sm ${activeTab === "custom" ? "text-white" : "text-muted"}`}>
+          <Text style={{ fontWeight: "600", fontSize: 14, color: activeTab === "custom" ? "#FFF" : colors.muted }}>
             My Plans
           </Text>
         </TouchableOpacity>
       </View>
 
       {/* Filters */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4" style={{ maxHeight: 36 }}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16, maxHeight: 36 }}>
         {["All", ...BODY_PARTS].map((filter) => (
           <TouchableOpacity
             key={filter}
             onPress={() => setSelectedFilter(filter)}
-            style={selectedFilter === filter ? { backgroundColor: colors.primary } : { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }}
-            className="px-3 py-1.5 rounded-full mr-2"
+            style={{
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              borderRadius: 20,
+              marginRight: 8,
+              backgroundColor: selectedFilter === filter ? colors.primary : colors.surface,
+              borderWidth: selectedFilter === filter ? 0 : 1,
+              borderColor: colors.border,
+            }}
             activeOpacity={0.7}
           >
-            <Text className={`text-xs font-semibold ${selectedFilter === filter ? "text-white" : "text-foreground"}`}>
+            <Text style={{ fontSize: 12, fontWeight: "600", color: selectedFilter === filter ? "#FFF" : colors.foreground }}>
               {filter}
             </Text>
           </TouchableOpacity>
@@ -112,12 +145,12 @@ export default function WorkoutsScreen() {
 
       {/* Plans List */}
       {filteredPlans.length === 0 ? (
-        <View className="flex-1 items-center justify-center py-12">
-          <Text className="text-4xl mb-3">🏋️‍♀️</Text>
-          <Text className="text-base font-semibold text-foreground">
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: 48 }}>
+          <Text style={{ fontSize: 40 }}>🏋️‍♀️</Text>
+          <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginTop: 12 }}>
             {activeTab === "custom" ? "No Custom Plans Yet" : "No Plans Found"}
           </Text>
-          <Text className="text-sm text-muted text-center mt-1 px-8">
+          <Text style={{ fontSize: 14, color: colors.muted, textAlign: "center", marginTop: 4, paddingHorizontal: 32 }}>
             {activeTab === "custom"
               ? "Create your first custom workout plan!"
               : "Try a different filter."}
@@ -125,10 +158,10 @@ export default function WorkoutsScreen() {
           {activeTab === "custom" && (
             <TouchableOpacity
               onPress={() => router.push("/create-plan" as any)}
-              className="bg-primary rounded-full px-6 py-3 mt-4"
+              style={{ backgroundColor: colors.primary, borderRadius: 20, paddingHorizontal: 24, paddingVertical: 12, marginTop: 16 }}
               activeOpacity={0.7}
             >
-              <Text className="text-white font-semibold">Create Plan</Text>
+              <Text style={{ color: "#FFF", fontWeight: "600" }}>Create Plan</Text>
             </TouchableOpacity>
           )}
         </View>

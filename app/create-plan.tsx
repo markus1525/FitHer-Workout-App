@@ -54,60 +54,96 @@ export default function CreatePlanScreen() {
   return (
     <ScreenContainer className="px-4 pt-2">
       {/* Header */}
-      <View className="flex-row items-center justify-between mb-4">
-        <View className="flex-row items-center">
-          <TouchableOpacity onPress={() => router.back()} className="mr-3" activeOpacity={0.7}>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 12 }} activeOpacity={0.7}>
             <MaterialIcons name="arrow-back" size={24} color={colors.foreground} />
           </TouchableOpacity>
-          <Text className="text-xl font-bold text-foreground">Create Plan</Text>
+          <Text style={{ fontSize: 20, fontWeight: "700", color: colors.foreground }}>Create Plan</Text>
         </View>
         <TouchableOpacity
           onPress={handleSave}
-          style={{ opacity: name.trim() && selectedExercises.length > 0 ? 1 : 0.4 }}
-          className="bg-primary rounded-full px-4 py-2"
+          style={{
+            opacity: name.trim() && selectedExercises.length > 0 ? 1 : 0.4,
+            backgroundColor: colors.primary,
+            borderRadius: 20,
+            paddingHorizontal: 16,
+            paddingVertical: 8,
+          }}
           activeOpacity={0.7}
           disabled={!name.trim() || selectedExercises.length === 0}
         >
-          <Text className="text-white font-semibold text-sm">Save</Text>
+          <Text style={{ color: "#FFF", fontWeight: "600", fontSize: 14 }}>Save</Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
         {/* Plan Details */}
-        <View className="bg-surface rounded-2xl p-4 mb-4">
-          <View className="mb-3">
-            <Text className="text-xs text-muted mb-1">Plan Name *</Text>
+        <View style={{ backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 16 }}>
+          <View style={{ marginBottom: 12 }}>
+            <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 6 }}>Plan Name *</Text>
             <TextInput
               value={name}
               onChangeText={setName}
               placeholder="e.g., Morning Burn"
               placeholderTextColor={colors.muted}
-              className="bg-background border border-border rounded-xl px-3 py-2.5 text-foreground"
+              returnKeyType="done"
+              style={{
+                backgroundColor: colors.background,
+                borderWidth: 1,
+                borderColor: colors.border,
+                borderRadius: 12,
+                paddingHorizontal: 14,
+                paddingVertical: 12,
+                fontSize: 15,
+                color: colors.foreground,
+                textAlign: "left",
+                textAlignVertical: "center",
+              }}
             />
           </View>
-          <View className="mb-3">
-            <Text className="text-xs text-muted mb-1">Description</Text>
+          <View style={{ marginBottom: 12 }}>
+            <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 6 }}>Description</Text>
             <TextInput
               value={description}
               onChangeText={setDescription}
               placeholder="Optional description"
               placeholderTextColor={colors.muted}
-              className="bg-background border border-border rounded-xl px-3 py-2.5 text-foreground"
               multiline
+              style={{
+                backgroundColor: colors.background,
+                borderWidth: 1,
+                borderColor: colors.border,
+                borderRadius: 12,
+                paddingHorizontal: 14,
+                paddingVertical: 12,
+                fontSize: 15,
+                color: colors.foreground,
+                textAlign: "left",
+                textAlignVertical: "top",
+                minHeight: 60,
+              }}
             />
           </View>
           <View>
-            <Text className="text-xs text-muted mb-2">Difficulty</Text>
-            <View className="flex-row gap-2">
+            <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 8 }}>Difficulty</Text>
+            <View style={{ flexDirection: "row", gap: 8 }}>
               {(["beginner", "intermediate", "advanced"] as const).map((d) => (
                 <TouchableOpacity
                   key={d}
                   onPress={() => setDifficulty(d)}
-                  style={difficulty === d ? { backgroundColor: colors.primary } : { backgroundColor: colors.background, borderColor: colors.border, borderWidth: 1 }}
-                  className="flex-1 py-2 rounded-lg items-center"
+                  style={{
+                    flex: 1,
+                    paddingVertical: 8,
+                    borderRadius: 8,
+                    alignItems: "center",
+                    backgroundColor: difficulty === d ? colors.primary : colors.background,
+                    borderWidth: difficulty === d ? 0 : 1,
+                    borderColor: colors.border,
+                  }}
                   activeOpacity={0.7}
                 >
-                  <Text className={`text-xs font-semibold capitalize ${difficulty === d ? "text-white" : "text-foreground"}`}>
+                  <Text style={{ fontSize: 12, fontWeight: "600", color: difficulty === d ? "#FFF" : colors.foreground, textTransform: "capitalize" }}>
                     {d}
                   </Text>
                 </TouchableOpacity>
@@ -117,21 +153,28 @@ export default function CreatePlanScreen() {
         </View>
 
         {/* Selected Count */}
-        <Text className="text-sm font-semibold text-foreground mb-2">
+        <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 8 }}>
           Select Exercises ({selectedExercises.length} selected)
         </Text>
 
         {/* Body Part Filter */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-3" style={{ maxHeight: 34 }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12, maxHeight: 36 }}>
           {["All", ...BODY_PARTS].map((part) => (
             <TouchableOpacity
               key={part}
               onPress={() => setFilterBodyPart(part)}
-              style={filterBodyPart === part ? { backgroundColor: colors.primary } : { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }}
-              className="px-3 py-1.5 rounded-full mr-2"
+              style={{
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 20,
+                marginRight: 8,
+                backgroundColor: filterBodyPart === part ? colors.primary : colors.surface,
+                borderWidth: filterBodyPart === part ? 0 : 1,
+                borderColor: colors.border,
+              }}
               activeOpacity={0.7}
             >
-              <Text className={`text-xs font-semibold ${filterBodyPart === part ? "text-white" : "text-foreground"}`}>
+              <Text style={{ fontSize: 12, fontWeight: "600", color: filterBodyPart === part ? "#FFF" : colors.foreground }}>
                 {part}
               </Text>
             </TouchableOpacity>
@@ -145,16 +188,24 @@ export default function CreatePlanScreen() {
             <TouchableOpacity
               key={exercise.id}
               onPress={() => toggleExercise(exercise.id)}
-              style={isSelected ? { borderColor: colors.primary, backgroundColor: colors.primary + "10" } : { borderColor: colors.border }}
-              className="rounded-xl p-3 mb-2 border flex-row items-center"
+              style={{
+                borderRadius: 12,
+                padding: 12,
+                marginBottom: 8,
+                borderWidth: 1,
+                borderColor: isSelected ? colors.primary : colors.border,
+                backgroundColor: isSelected ? colors.primary + "10" : "transparent",
+                flexDirection: "row",
+                alignItems: "center",
+              }}
               activeOpacity={0.7}
             >
-              <View className="w-9 h-9 rounded-full bg-surface items-center justify-center mr-3">
-                <Text className="text-base">{exercise.image}</Text>
+              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.surface, alignItems: "center", justifyContent: "center", marginRight: 12 }}>
+                <Text style={{ fontSize: 16 }}>{exercise.image}</Text>
               </View>
-              <View className="flex-1">
-                <Text className="text-sm font-semibold text-foreground">{exercise.name}</Text>
-                <Text className="text-xs text-muted">
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground }}>{exercise.name}</Text>
+                <Text style={{ fontSize: 12, color: colors.muted }}>
                   {exercise.bodyPart} • {exercise.reps ? `${exercise.reps} reps` : `${exercise.duration}s`}
                 </Text>
               </View>

@@ -52,133 +52,175 @@ export default function GoalsScreen() {
   return (
     <ScreenContainer className="px-4 pt-2">
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
-        <Text className="text-2xl font-bold text-foreground mb-4">My Goals</Text>
+        <Text style={{ fontSize: 24, fontWeight: "700", color: colors.foreground, marginBottom: 16 }}>My Goals</Text>
 
         {/* Stats Overview */}
-        <View className="flex-row gap-3 mb-4">
-          <View className="flex-1 bg-surface rounded-2xl p-3 items-center">
-            <Text className="text-2xl font-bold text-primary">{state.goals.totalWorkouts}</Text>
-            <Text className="text-xs text-muted">Total Workouts</Text>
+        <View style={{ flexDirection: "row", gap: 12, marginBottom: 16 }}>
+          <View style={{ flex: 1, backgroundColor: colors.surface, borderRadius: 16, padding: 12, alignItems: "center" }}>
+            <Text style={{ fontSize: 22, fontWeight: "700", color: colors.primary }}>{state.goals.totalWorkouts}</Text>
+            <Text style={{ fontSize: 11, color: colors.muted }}>Total Workouts</Text>
           </View>
-          <View className="flex-1 bg-surface rounded-2xl p-3 items-center">
-            <Text className="text-2xl font-bold text-primary">{state.goals.totalMinutes}</Text>
-            <Text className="text-xs text-muted">Total Minutes</Text>
+          <View style={{ flex: 1, backgroundColor: colors.surface, borderRadius: 16, padding: 12, alignItems: "center" }}>
+            <Text style={{ fontSize: 22, fontWeight: "700", color: colors.primary }}>{state.goals.totalMinutes}</Text>
+            <Text style={{ fontSize: 11, color: colors.muted }}>Total Minutes</Text>
           </View>
-          <View className="flex-1 bg-surface rounded-2xl p-3 items-center">
-            <Text className="text-2xl font-bold text-primary">{state.goals.totalCalories}</Text>
-            <Text className="text-xs text-muted">Calories Burned</Text>
+          <View style={{ flex: 1, backgroundColor: colors.surface, borderRadius: 16, padding: 12, alignItems: "center" }}>
+            <Text style={{ fontSize: 22, fontWeight: "700", color: colors.primary }}>{state.goals.totalCalories}</Text>
+            <Text style={{ fontSize: 11, color: colors.muted }}>Calories Burned</Text>
           </View>
         </View>
 
         {/* Weekly Workout Goal */}
-        <View className="bg-surface rounded-2xl p-4 mb-3">
-          <View className="flex-row items-center justify-between mb-2">
-            <View className="flex-row items-center">
+        <View style={{ backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 12 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
               <MaterialIcons name="fitness-center" size={20} color={colors.primary} />
-              <Text className="text-sm font-semibold text-foreground ml-2">Weekly Workouts</Text>
+              <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginLeft: 8 }}>Weekly Workouts</Text>
             </View>
             {editingGoal === "weeklyWorkouts" ? (
-              <View className="flex-row items-center">
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <TextInput
                   value={tempValue}
                   onChangeText={setTempValue}
                   keyboardType="number-pad"
-                  className="bg-background border border-border rounded-lg px-2 py-1 w-12 text-center text-foreground"
                   autoFocus
+                  returnKeyType="done"
+                  onSubmitEditing={() => handleSaveGoal("weeklyWorkouts")}
+                  style={{
+                    backgroundColor: colors.background,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    borderRadius: 8,
+                    paddingHorizontal: 8,
+                    paddingVertical: 6,
+                    width: 48,
+                    textAlign: "center",
+                    fontSize: 14,
+                    color: colors.foreground,
+                    textAlignVertical: "center",
+                  }}
                 />
-                <TouchableOpacity onPress={() => handleSaveGoal("weeklyWorkouts")} className="ml-2" activeOpacity={0.7}>
+                <TouchableOpacity onPress={() => handleSaveGoal("weeklyWorkouts")} style={{ marginLeft: 8 }} activeOpacity={0.7}>
                   <MaterialIcons name="check" size={20} color={colors.success} />
                 </TouchableOpacity>
               </View>
             ) : (
               <TouchableOpacity
                 onPress={() => { setEditingGoal("weeklyWorkouts"); setTempValue(String(state.goals.weeklyWorkouts)); }}
-                className="flex-row items-center"
+                style={{ flexDirection: "row", alignItems: "center" }}
                 activeOpacity={0.7}
               >
-                <Text className="text-sm text-muted">{weeklyWorkouts}/{state.goals.weeklyWorkouts}</Text>
-                <MaterialIcons name="edit" size={14} color={colors.muted} className="ml-1" />
+                <Text style={{ fontSize: 14, color: colors.muted }}>{weeklyWorkouts}/{state.goals.weeklyWorkouts}</Text>
+                <MaterialIcons name="edit" size={14} color={colors.muted} style={{ marginLeft: 4 }} />
               </TouchableOpacity>
             )}
           </View>
-          <View className="h-3 bg-border rounded-full overflow-hidden">
-            <View style={{ width: `${weeklyProgress * 100}%`, backgroundColor: colors.primary }} className="h-full rounded-full" />
+          <View style={{ height: 12, backgroundColor: colors.border, borderRadius: 6, overflow: "hidden" }}>
+            <View style={{ width: `${weeklyProgress * 100}%`, backgroundColor: colors.primary, height: "100%", borderRadius: 6 }} />
           </View>
         </View>
 
         {/* Water Goal */}
-        <View className="bg-surface rounded-2xl p-4 mb-3">
-          <View className="flex-row items-center justify-between mb-2">
-            <View className="flex-row items-center">
+        <View style={{ backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 12 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
               <MaterialIcons name="water-drop" size={20} color="#2196F3" />
-              <Text className="text-sm font-semibold text-foreground ml-2">Daily Water</Text>
+              <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginLeft: 8 }}>Daily Water</Text>
             </View>
             {editingGoal === "dailyWater" ? (
-              <View className="flex-row items-center">
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <TextInput
                   value={tempValue}
                   onChangeText={setTempValue}
                   keyboardType="number-pad"
-                  className="bg-background border border-border rounded-lg px-2 py-1 w-12 text-center text-foreground"
                   autoFocus
+                  returnKeyType="done"
+                  onSubmitEditing={() => handleSaveGoal("dailyWater")}
+                  style={{
+                    backgroundColor: colors.background,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    borderRadius: 8,
+                    paddingHorizontal: 8,
+                    paddingVertical: 6,
+                    width: 48,
+                    textAlign: "center",
+                    fontSize: 14,
+                    color: colors.foreground,
+                    textAlignVertical: "center",
+                  }}
                 />
-                <TouchableOpacity onPress={() => handleSaveGoal("dailyWater")} className="ml-2" activeOpacity={0.7}>
+                <TouchableOpacity onPress={() => handleSaveGoal("dailyWater")} style={{ marginLeft: 8 }} activeOpacity={0.7}>
                   <MaterialIcons name="check" size={20} color={colors.success} />
                 </TouchableOpacity>
               </View>
             ) : (
               <TouchableOpacity
                 onPress={() => { setEditingGoal("dailyWater"); setTempValue(String(state.goals.dailyWater)); }}
-                className="flex-row items-center"
+                style={{ flexDirection: "row", alignItems: "center" }}
                 activeOpacity={0.7}
               >
-                <Text className="text-sm text-muted">{state.todayWater}/{state.goals.dailyWater} glasses</Text>
-                <MaterialIcons name="edit" size={14} color={colors.muted} className="ml-1" />
+                <Text style={{ fontSize: 14, color: colors.muted }}>{state.todayWater}/{state.goals.dailyWater} glasses</Text>
+                <MaterialIcons name="edit" size={14} color={colors.muted} style={{ marginLeft: 4 }} />
               </TouchableOpacity>
             )}
           </View>
-          <View className="h-3 bg-border rounded-full overflow-hidden">
-            <View style={{ width: `${waterProgress * 100}%`, backgroundColor: "#2196F3" }} className="h-full rounded-full" />
+          <View style={{ height: 12, backgroundColor: colors.border, borderRadius: 6, overflow: "hidden" }}>
+            <View style={{ width: `${waterProgress * 100}%`, backgroundColor: "#2196F3", height: "100%", borderRadius: 6 }} />
           </View>
         </View>
 
         {/* Target Weight */}
-        <View className="bg-surface rounded-2xl p-4 mb-4">
-          <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center">
+        <View style={{ backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 16 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
               <MaterialIcons name="monitor-weight" size={20} color={colors.primary} />
-              <Text className="text-sm font-semibold text-foreground ml-2">Target Weight</Text>
+              <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginLeft: 8 }}>Target Weight</Text>
             </View>
             {editingGoal === "targetWeight" ? (
-              <View className="flex-row items-center">
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <TextInput
                   value={tempValue}
                   onChangeText={setTempValue}
                   keyboardType="decimal-pad"
-                  className="bg-background border border-border rounded-lg px-2 py-1 w-16 text-center text-foreground"
                   autoFocus
+                  returnKeyType="done"
+                  onSubmitEditing={() => handleSaveGoal("targetWeight")}
+                  style={{
+                    backgroundColor: colors.background,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    borderRadius: 8,
+                    paddingHorizontal: 8,
+                    paddingVertical: 6,
+                    width: 64,
+                    textAlign: "center",
+                    fontSize: 14,
+                    color: colors.foreground,
+                    textAlignVertical: "center",
+                  }}
                 />
-                <Text className="text-xs text-muted ml-1">kg</Text>
-                <TouchableOpacity onPress={() => handleSaveGoal("targetWeight")} className="ml-2" activeOpacity={0.7}>
+                <Text style={{ fontSize: 12, color: colors.muted, marginLeft: 4 }}>kg</Text>
+                <TouchableOpacity onPress={() => handleSaveGoal("targetWeight")} style={{ marginLeft: 8 }} activeOpacity={0.7}>
                   <MaterialIcons name="check" size={20} color={colors.success} />
                 </TouchableOpacity>
               </View>
             ) : (
               <TouchableOpacity
                 onPress={() => { setEditingGoal("targetWeight"); setTempValue(String(state.goals.targetWeight || "")); }}
-                className="flex-row items-center"
+                style={{ flexDirection: "row", alignItems: "center" }}
                 activeOpacity={0.7}
               >
-                <Text className="text-sm text-muted">
+                <Text style={{ fontSize: 14, color: colors.muted }}>
                   {state.goals.targetWeight > 0 ? `${state.goals.targetWeight} kg` : "Set goal"}
                 </Text>
-                <MaterialIcons name="edit" size={14} color={colors.muted} className="ml-1" />
+                <MaterialIcons name="edit" size={14} color={colors.muted} style={{ marginLeft: 4 }} />
               </TouchableOpacity>
             )}
           </View>
           {state.goals.targetWeight > 0 && state.profile?.weight && (
-            <View className="mt-2">
-              <Text className="text-xs text-muted">
+            <View style={{ marginTop: 8 }}>
+              <Text style={{ fontSize: 12, color: colors.muted }}>
                 Current: {state.profile.weight} kg → Target: {state.goals.targetWeight} kg
                 ({state.profile.weight > state.goals.targetWeight ? `-${(state.profile.weight - state.goals.targetWeight).toFixed(1)}` : `+${(state.goals.targetWeight - state.profile.weight).toFixed(1)}`} kg to go)
               </Text>
@@ -187,17 +229,25 @@ export default function GoalsScreen() {
         </View>
 
         {/* Achievements */}
-        <Text className="text-base font-semibold text-foreground mb-3">Achievements</Text>
-        <View className="flex-row flex-wrap gap-3 mb-6">
+        <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginBottom: 12 }}>Achievements</Text>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 24 }}>
           {achievements.map((a) => (
             <View
               key={a.id}
-              className="bg-surface rounded-2xl p-3 items-center border border-border"
-              style={{ width: "30%", opacity: a.unlocked ? 1 : 0.4 }}
+              style={{
+                backgroundColor: colors.surface,
+                borderRadius: 16,
+                padding: 12,
+                alignItems: "center",
+                borderWidth: 1,
+                borderColor: colors.border,
+                width: "30%",
+                opacity: a.unlocked ? 1 : 0.4,
+              }}
             >
               <MaterialIcons name={a.icon as any} size={28} color={a.unlocked ? colors.primary : colors.muted} />
-              <Text className="text-xs font-semibold text-foreground mt-1 text-center" numberOfLines={1}>{a.title}</Text>
-              <Text className="text-[10px] text-muted text-center mt-0.5" numberOfLines={2}>{a.desc}</Text>
+              <Text style={{ fontSize: 11, fontWeight: "600", color: colors.foreground, marginTop: 4, textAlign: "center" }} numberOfLines={1}>{a.title}</Text>
+              <Text style={{ fontSize: 10, color: colors.muted, textAlign: "center", marginTop: 2 }} numberOfLines={2}>{a.desc}</Text>
             </View>
           ))}
         </View>

@@ -22,3 +22,7 @@
 - [x] Ensure responsive design for all devices
 - [x] Double-check errors and alignment issues
 - [x] Push to GitHub repository
+- [ ] Fix input text alignment issues across all screens
+- [ ] Fix settings section not clickable on mobile (Pressable/TouchableOpacity issue)
+- [ ] Add profile picture upload feature
+- [ ] Fix general alignment and error issues

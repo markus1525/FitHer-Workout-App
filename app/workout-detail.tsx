@@ -19,9 +19,9 @@ export default function WorkoutDetailScreen() {
   if (!plan) {
     return (
       <ScreenContainer className="items-center justify-center px-6">
-        <Text className="text-lg text-foreground">Plan not found</Text>
-        <TouchableOpacity onPress={() => router.back()} className="mt-4 bg-primary rounded-xl px-6 py-3" activeOpacity={0.7}>
-          <Text className="text-white font-semibold">Go Back</Text>
+        <Text style={{ fontSize: 18, color: colors.foreground }}>Plan not found</Text>
+        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 16, backgroundColor: colors.primary, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12 }} activeOpacity={0.7}>
+          <Text style={{ color: "#FFF", fontWeight: "600" }}>Go Back</Text>
         </TouchableOpacity>
       </ScreenContainer>
     );
@@ -43,56 +43,56 @@ export default function WorkoutDetailScreen() {
   return (
     <ScreenContainer className="px-4 pt-2">
       {/* Header */}
-      <View className="flex-row items-center mb-4">
-        <TouchableOpacity onPress={() => router.back()} className="mr-3" activeOpacity={0.7}>
+      <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 16 }}>
+        <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 12 }} activeOpacity={0.7}>
           <MaterialIcons name="arrow-back" size={24} color={colors.foreground} />
         </TouchableOpacity>
-        <Text className="text-xl font-bold text-foreground flex-1" numberOfLines={1}>{plan.name}</Text>
+        <Text style={{ fontSize: 20, fontWeight: "700", color: colors.foreground, flex: 1 }} numberOfLines={1}>{plan.name}</Text>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
         {/* Plan Info */}
-        <View className="bg-surface rounded-2xl p-4 mb-4">
-          <Text className="text-sm text-muted mb-3">{plan.description}</Text>
-          <View className="flex-row items-center gap-4">
-            <View className="flex-row items-center">
+        <View style={{ backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 16 }}>
+          <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 12 }}>{plan.description}</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
               <MaterialIcons name="schedule" size={16} color={colors.muted} />
-              <Text className="text-sm text-muted ml-1">{plan.duration} min</Text>
+              <Text style={{ fontSize: 14, color: colors.muted, marginLeft: 4 }}>{plan.duration} min</Text>
             </View>
-            <View className="flex-row items-center">
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
               <MaterialIcons name="local-fire-department" size={16} color={colors.warning} />
-              <Text className="text-sm text-muted ml-1">~{totalCalories} cal</Text>
+              <Text style={{ fontSize: 14, color: colors.muted, marginLeft: 4 }}>~{totalCalories} cal</Text>
             </View>
-            <View style={{ backgroundColor: getDifficultyColor(plan.difficulty) + "20" }} className="px-2 py-0.5 rounded-full">
-              <Text style={{ color: getDifficultyColor(plan.difficulty) }} className="text-xs font-semibold capitalize">
+            <View style={{ backgroundColor: getDifficultyColor(plan.difficulty) + "20", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 }}>
+              <Text style={{ color: getDifficultyColor(plan.difficulty), fontSize: 12, fontWeight: "600", textTransform: "capitalize" }}>
                 {plan.difficulty}
               </Text>
             </View>
           </View>
-          <View className="flex-row flex-wrap gap-1.5 mt-3">
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 12 }}>
             {plan.bodyParts.map((part) => (
-              <View key={part} className="bg-primary/10 px-2 py-0.5 rounded-full">
-                <Text className="text-xs text-primary font-medium">{part}</Text>
+              <View key={part} style={{ backgroundColor: colors.primary + "15", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 }}>
+                <Text style={{ fontSize: 12, color: colors.primary, fontWeight: "500" }}>{part}</Text>
               </View>
             ))}
           </View>
         </View>
 
         {/* Exercise List */}
-        <Text className="text-base font-semibold text-foreground mb-3">
+        <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginBottom: 12 }}>
           Exercises ({exercises.length})
         </Text>
         {exercises.map((exercise, index) => {
           if (!exercise) return null;
           return (
-            <View key={exercise.id} className="bg-surface rounded-xl p-3 mb-2 border border-border">
-              <View className="flex-row items-center">
-                <View className="w-10 h-10 rounded-full bg-primary/10 items-center justify-center mr-3">
-                  <Text className="text-lg">{exercise.image}</Text>
+            <View key={exercise.id} style={{ backgroundColor: colors.surface, borderRadius: 12, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: colors.border }}>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary + "15", alignItems: "center", justifyContent: "center", marginRight: 12 }}>
+                  <Text style={{ fontSize: 18 }}>{exercise.image}</Text>
                 </View>
-                <View className="flex-1">
-                  <Text className="text-sm font-semibold text-foreground">{exercise.name}</Text>
-                  <Text className="text-xs text-muted mt-0.5">
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground }}>{exercise.name}</Text>
+                  <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>
                     {exercise.reps ? `${exercise.reps} reps` : `${exercise.duration}s`}
                     {exercise.sets ? ` × ${exercise.sets} sets` : ""}
                     {" • "}{exercise.calories} cal
@@ -101,28 +101,39 @@ export default function WorkoutDetailScreen() {
                 {/* YouTube Preview Button */}
                 <TouchableOpacity
                   onPress={() => openYouTube(exercise.youtubeId)}
-                  className="bg-red-500 rounded-full w-9 h-9 items-center justify-center"
-                  style={{ backgroundColor: "#FF0000" }}
+                  style={{ backgroundColor: "#FF0000", borderRadius: 18, width: 36, height: 36, alignItems: "center", justifyContent: "center" }}
                   activeOpacity={0.7}
                 >
                   <MaterialIcons name="play-arrow" size={20} color="#FFF" />
                 </TouchableOpacity>
               </View>
-              <Text className="text-xs text-muted mt-2 ml-13" numberOfLines={2}>{exercise.description}</Text>
+              <Text style={{ fontSize: 12, color: colors.muted, marginTop: 8, marginLeft: 52 }} numberOfLines={2}>{exercise.description}</Text>
             </View>
           );
         })}
       </ScrollView>
 
       {/* Start Workout Button */}
-      <View className="absolute bottom-6 left-4 right-4">
+      <View style={{ position: "absolute", bottom: 24, left: 16, right: 16 }}>
         <TouchableOpacity
           onPress={() => router.push({ pathname: "/exercise-player" as any, params: { planId: plan.id, isCustom: isCustom || "0" } })}
-          className="bg-primary rounded-2xl py-4 items-center shadow-lg flex-row justify-center"
+          style={{
+            backgroundColor: colors.primary,
+            borderRadius: 16,
+            paddingVertical: 16,
+            alignItems: "center",
+            flexDirection: "row",
+            justifyContent: "center",
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.15,
+            shadowRadius: 8,
+            elevation: 4,
+          }}
           activeOpacity={0.8}
         >
           <MaterialIcons name="play-arrow" size={24} color="#FFF" />
-          <Text className="text-white font-bold text-lg ml-2">Start Workout</Text>
+          <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 18, marginLeft: 8 }}>Start Workout</Text>
         </TouchableOpacity>
       </View>
     </ScreenContainer>

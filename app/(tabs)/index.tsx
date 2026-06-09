@@ -43,7 +43,7 @@ export default function HomeScreen() {
   if (state.isLoading) {
     return (
       <ScreenContainer className="items-center justify-center">
-        <Text className="text-lg text-muted">Loading...</Text>
+        <Text style={{ fontSize: 18, color: colors.muted }}>Loading...</Text>
       </ScreenContainer>
     );
   }
@@ -67,104 +67,110 @@ export default function HomeScreen() {
     <ScreenContainer className="px-4 pt-2">
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
         {/* Greeting */}
-        <View className="mb-4">
-          <Text className="text-2xl font-bold text-foreground">
+        <View style={{ marginBottom: 16 }}>
+          <Text style={{ fontSize: 24, fontWeight: "700", color: colors.foreground }}>
             Hey, {state.profile?.name || "Beautiful"} 👋
           </Text>
-          <Text className="text-sm text-muted mt-1 italic">"{quote}"</Text>
+          <Text style={{ fontSize: 13, color: colors.muted, marginTop: 4, fontStyle: "italic" }}>"{quote}"</Text>
         </View>
 
         {/* Cycle Phase Banner */}
         {phaseInfo && (
           <TouchableOpacity
             onPress={() => router.push("/(tabs)/cycle")}
-            style={{ backgroundColor: phaseInfo.color + "20", borderColor: phaseInfo.color, borderWidth: 1 }}
-            className="rounded-2xl p-3 mb-4 flex-row items-center"
+            style={{
+              backgroundColor: phaseInfo.color + "20",
+              borderColor: phaseInfo.color,
+              borderWidth: 1,
+              borderRadius: 16,
+              padding: 12,
+              marginBottom: 16,
+              flexDirection: "row",
+              alignItems: "center",
+            }}
+            activeOpacity={0.7}
           >
-            <Text className="text-2xl mr-2">{phaseInfo.icon}</Text>
-            <View className="flex-1">
-              <Text style={{ color: phaseInfo.color }} className="font-semibold text-sm">
+            <Text style={{ fontSize: 24, marginRight: 8 }}>{phaseInfo.icon}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: phaseInfo.color, fontWeight: "600", fontSize: 14 }}>
                 {phaseInfo.name} Phase
               </Text>
-              <Text className="text-xs text-muted">{phaseInfo.description}</Text>
+              <Text style={{ fontSize: 12, color: colors.muted }}>{phaseInfo.description}</Text>
             </View>
             <MaterialIcons name="chevron-right" size={20} color={colors.muted} />
           </TouchableOpacity>
         )}
 
         {/* Today's Status */}
-        <View className="bg-surface rounded-2xl p-4 mb-4">
-          <Text className="text-base font-semibold text-foreground mb-3">Today's Plan</Text>
+        <View style={{ backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 16 }}>
+          <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginBottom: 12 }}>Today's Plan</Text>
           {isRestDay ? (
-            <View className="items-center py-4">
-              <Text className="text-4xl mb-2">🧘‍♀️</Text>
-              <Text className="text-lg font-semibold text-foreground">Rest Day</Text>
-              <Text className="text-sm text-muted text-center mt-1">
+            <View style={{ alignItems: "center", paddingVertical: 16 }}>
+              <Text style={{ fontSize: 40 }}>🧘‍♀️</Text>
+              <Text style={{ fontSize: 18, fontWeight: "600", color: colors.foreground, marginTop: 8 }}>Rest Day</Text>
+              <Text style={{ fontSize: 14, color: colors.muted, textAlign: "center", marginTop: 4 }}>
                 Take it easy! Stretch, hydrate, and recover.
               </Text>
             </View>
           ) : (
             <TouchableOpacity
               onPress={() => router.push("/(tabs)/workouts")}
-              className="bg-primary rounded-xl p-4 items-center"
-              style={{ opacity: 1 }}
+              style={{ backgroundColor: colors.primary, borderRadius: 12, padding: 16, alignItems: "center" }}
               activeOpacity={0.8}
             >
               <MaterialIcons name="play-arrow" size={32} color="#FFF" />
-              <Text className="text-white font-bold text-base mt-1">Start Workout</Text>
-              <Text className="text-white/80 text-xs mt-0.5">Tap to choose a plan</Text>
+              <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16, marginTop: 4 }}>Start Workout</Text>
+              <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12, marginTop: 2 }}>Tap to choose a plan</Text>
             </TouchableOpacity>
           )}
         </View>
 
         {/* Quick Stats */}
-        <View className="flex-row gap-3 mb-4">
-          <View className="flex-1 bg-surface rounded-2xl p-3 items-center">
+        <View style={{ flexDirection: "row", gap: 12, marginBottom: 16 }}>
+          <View style={{ flex: 1, backgroundColor: colors.surface, borderRadius: 16, padding: 12, alignItems: "center" }}>
             <MaterialIcons name="local-fire-department" size={24} color={colors.warning} />
-            <Text className="text-lg font-bold text-foreground mt-1">{state.goals.currentStreak}</Text>
-            <Text className="text-xs text-muted">Day Streak</Text>
+            <Text style={{ fontSize: 18, fontWeight: "700", color: colors.foreground, marginTop: 4 }}>{state.goals.currentStreak}</Text>
+            <Text style={{ fontSize: 11, color: colors.muted }}>Day Streak</Text>
           </View>
-          <View className="flex-1 bg-surface rounded-2xl p-3 items-center">
+          <View style={{ flex: 1, backgroundColor: colors.surface, borderRadius: 16, padding: 12, alignItems: "center" }}>
             <MaterialIcons name="fitness-center" size={24} color={colors.primary} />
-            <Text className="text-lg font-bold text-foreground mt-1">{thisWeekWorkouts}/{state.goals.weeklyWorkouts}</Text>
-            <Text className="text-xs text-muted">This Week</Text>
+            <Text style={{ fontSize: 18, fontWeight: "700", color: colors.foreground, marginTop: 4 }}>{thisWeekWorkouts}/{state.goals.weeklyWorkouts}</Text>
+            <Text style={{ fontSize: 11, color: colors.muted }}>This Week</Text>
           </View>
-          <View className="flex-1 bg-surface rounded-2xl p-3 items-center">
+          <View style={{ flex: 1, backgroundColor: colors.surface, borderRadius: 16, padding: 12, alignItems: "center" }}>
             <MaterialIcons name="bolt" size={24} color={colors.success} />
-            <Text className="text-lg font-bold text-foreground mt-1">{state.goals.totalCalories}</Text>
-            <Text className="text-xs text-muted">Calories</Text>
+            <Text style={{ fontSize: 18, fontWeight: "700", color: colors.foreground, marginTop: 4 }}>{state.goals.totalCalories}</Text>
+            <Text style={{ fontSize: 11, color: colors.muted }}>Calories</Text>
           </View>
         </View>
 
         {/* Water Intake */}
-        <View className="bg-surface rounded-2xl p-4 mb-4">
-          <View className="flex-row items-center justify-between mb-2">
-            <View className="flex-row items-center">
+        <View style={{ backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 16 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
               <MaterialIcons name="water-drop" size={20} color="#2196F3" />
-              <Text className="text-base font-semibold text-foreground ml-2">Water Intake</Text>
+              <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginLeft: 8 }}>Water Intake</Text>
             </View>
-            <Text className="text-sm text-muted">{state.todayWater}/{state.goals.dailyWater} glasses</Text>
+            <Text style={{ fontSize: 13, color: colors.muted }}>{state.todayWater}/{state.goals.dailyWater} glasses</Text>
           </View>
           {/* Progress bar */}
-          <View className="h-3 bg-border rounded-full overflow-hidden mb-3">
+          <View style={{ height: 12, backgroundColor: colors.border, borderRadius: 6, overflow: "hidden", marginBottom: 12 }}>
             <View
-              style={{ width: `${waterProgress * 100}%`, backgroundColor: "#2196F3" }}
-              className="h-full rounded-full"
+              style={{ width: `${waterProgress * 100}%`, backgroundColor: "#2196F3", height: "100%", borderRadius: 6 }}
             />
           </View>
-          <View className="flex-row items-center justify-center gap-4">
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 16 }}>
             <TouchableOpacity
               onPress={removeWater}
-              style={{ backgroundColor: colors.border }}
-              className="w-10 h-10 rounded-full items-center justify-center"
+              style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.border, alignItems: "center", justifyContent: "center" }}
               activeOpacity={0.7}
             >
               <MaterialIcons name="remove" size={20} color={colors.foreground} />
             </TouchableOpacity>
-            <Text className="text-2xl">💧</Text>
+            <Text style={{ fontSize: 24 }}>💧</Text>
             <TouchableOpacity
               onPress={addWater}
-              className="w-10 h-10 rounded-full items-center justify-center bg-primary"
+              style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center" }}
               activeOpacity={0.7}
             >
               <MaterialIcons name="add" size={20} color="#FFF" />
@@ -173,30 +179,37 @@ export default function HomeScreen() {
         </View>
 
         {/* Suggested Workouts */}
-        <View className="mb-4">
-          <Text className="text-base font-semibold text-foreground mb-3">Suggested For You</Text>
+        <View style={{ marginBottom: 16 }}>
+          <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginBottom: 12 }}>Suggested For You</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {DEFAULT_WORKOUT_PLANS.slice(0, 4).map((plan) => (
               <TouchableOpacity
                 key={plan.id}
                 onPress={() => router.push({ pathname: "/workout-detail", params: { planId: plan.id } })}
-                className="bg-surface rounded-2xl p-4 mr-3 border border-border"
-                style={{ width: 180 }}
+                style={{
+                  backgroundColor: colors.surface,
+                  borderRadius: 16,
+                  padding: 16,
+                  marginRight: 12,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  width: 180,
+                }}
                 activeOpacity={0.7}
               >
-                <Text className="text-2xl mb-2">
+                <Text style={{ fontSize: 24, marginBottom: 8 }}>
                   {plan.difficulty === "beginner" ? "🌱" : plan.difficulty === "intermediate" ? "🔥" : "⚡"}
                 </Text>
-                <Text className="text-sm font-semibold text-foreground" numberOfLines={1}>{plan.name}</Text>
-                <Text className="text-xs text-muted mt-1">{plan.duration} min • {plan.difficulty}</Text>
+                <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground }} numberOfLines={1}>{plan.name}</Text>
+                <Text style={{ fontSize: 12, color: colors.muted, marginTop: 4 }}>{plan.duration} min • {plan.difficulty}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
         </View>
 
         {/* Footer */}
-        <View className="items-center mt-4 mb-8">
-          <Text className="text-xs text-muted">Developed by Markus with ❤️</Text>
+        <View style={{ alignItems: "center", marginTop: 16, marginBottom: 32 }}>
+          <Text style={{ fontSize: 12, color: colors.muted }}>Developed by Markus with ❤️</Text>
         </View>
       </ScrollView>
     </ScreenContainer>

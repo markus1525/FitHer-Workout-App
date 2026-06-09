@@ -1,7 +1,8 @@
-import { ScrollView, Text, View, TouchableOpacity, TextInput, Alert, Platform } from "react-native";
+import { ScrollView, Text, View, TouchableOpacity, TextInput, Alert, Platform, Image } from "react-native";
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import * as ImagePicker from "expo-image-picker";
 import { ScreenContainer } from "@/components/screen-container";
 import { useApp } from "@/lib/app-context";
 import { useColors } from "@/hooks/use-colors";
@@ -15,6 +16,9 @@ export default function ProfileScreen() {
   const [age, setAge] = useState(String(state.profile?.age || ""));
   const [height, setHeight] = useState(String(state.profile?.height || ""));
   const [weight, setWeight] = useState(String(state.profile?.weight || ""));
+  const [showNotifInfo, setShowNotifInfo] = useState(false);
+  const [showAboutInfo, setShowAboutInfo] = useState(false);
+  const [unitSystem, setUnitSystem] = useState<"metric" | "imperial">(state.profile?.unitSystem || "metric");
 
   const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -27,7 +31,8 @@ export default function ProfileScreen() {
       weight: parseFloat(weight) || 60,
       fitnessGoal: state.profile?.fitnessGoal || "stay_active",
       fitnessLevel: state.profile?.fitnessLevel || "beginner",
-      unitSystem: state.profile?.unitSystem || "metric",
+      unitSystem: unitSystem,
+      profileImage: state.profile?.profileImage,
     });
     setEditing(false);
   };
@@ -38,6 +43,46 @@ export default function ProfileScreen() {
     await updateSchedule(newSchedule);
   };
 
+  const pickProfileImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const imageUri = result.assets[0].uri;
+        await updateProfile({
+          name: state.profile?.name || "User",
+          age: state.profile?.age || 25,
+          height: state.profile?.height || 165,
+          weight: state.profile?.weight || 60,
+          fitnessGoal: state.profile?.fitnessGoal || "stay_active",
+          fitnessLevel: state.profile?.fitnessLevel || "beginner",
+          unitSystem: state.profile?.unitSystem || "metric",
+          profileImage: imageUri,
+        });
+      }
+    } catch (error) {
+      if (Platform.OS !== "web") {
+        Alert.alert("Error", "Failed to pick image. Please try again.");
+      }
+    }
+  };
+
+  const toggleUnit = async () => {
+    const newUnit = unitSystem === "metric" ? "imperial" : "metric";
+    setUnitSystem(newUnit);
+    if (state.profile) {
+      await updateProfile({
+        ...state.profile,
+        unitSystem: newUnit,
+      });
+    }
+  };
+
   return (
     <ScreenContainer className="px-4 pt-2">
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
@@ -45,9 +90,45 @@ export default function ProfileScreen() {
 
         {/* Profile Card */}
         <View className="bg-surface rounded-2xl p-5 mb-4 items-center">
-          <View className="w-20 h-20 rounded-full bg-primary/20 items-center justify-center mb-3">
-            <Text className="text-3xl">👩</Text>
-          </View>
+          {/* Profile Picture */}
+          <TouchableOpacity
+            onPress={pickProfileImage}
+            activeOpacity={0.7}
+            style={{
+              width: 80,
+              height: 80,
+              borderRadius: 40,
+              backgroundColor: colors.primary + "20",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: 12,
+              overflow: "hidden",
+            }}
+          >
+            {state.profile?.profileImage ? (
+              <Image
+                source={{ uri: state.profile.profileImage }}
+                style={{ width: 80, height: 80, borderRadius: 40 }}
+              />
+            ) : (
+              <Text style={{ fontSize: 30 }}>👩</Text>
+            )}
+            <View
+              style={{
+                position: "absolute",
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: 24,
+                backgroundColor: "rgba(0,0,0,0.5)",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <MaterialIcons name="camera-alt" size={14} color="#FFF" />
+            </View>
+          </TouchableOpacity>
+
           {!editing ? (
             <>
               <Text className="text-xl font-bold text-foreground">{state.profile?.name || "User"}</Text>
@@ -62,74 +143,142 @@ export default function ProfileScreen() {
                   setHeight(String(state.profile?.height || ""));
                   setWeight(String(state.profile?.weight || ""));
                 }}
-                className="mt-3 bg-primary/10 rounded-full px-4 py-2 flex-row items-center"
+                style={{
+                  marginTop: 12,
+                  backgroundColor: colors.primary + "15",
+                  borderRadius: 20,
+                  paddingHorizontal: 16,
+                  paddingVertical: 8,
+                  flexDirection: "row",
+                  alignItems: "center",
+                }}
                 activeOpacity={0.7}
               >
                 <MaterialIcons name="edit" size={16} color={colors.primary} />
-                <Text className="text-primary font-semibold text-sm ml-1">Edit Profile</Text>
+                <Text style={{ color: colors.primary, fontWeight: "600", fontSize: 14, marginLeft: 4 }}>Edit Profile</Text>
               </TouchableOpacity>
             </>
           ) : (
             <View className="w-full mt-2">
-              <View className="mb-3">
-                <Text className="text-xs text-muted mb-1">Name</Text>
+              <View style={{ marginBottom: 12 }}>
+                <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 4 }}>Name</Text>
                 <TextInput
                   value={name}
                   onChangeText={setName}
-                  className="bg-background border border-border rounded-xl px-3 py-2.5 text-foreground"
+                  style={{
+                    backgroundColor: colors.background,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    borderRadius: 12,
+                    paddingHorizontal: 14,
+                    paddingVertical: 12,
+                    fontSize: 15,
+                    color: colors.foreground,
+                    textAlign: "left",
+                    textAlignVertical: "center",
+                  }}
                   placeholder="Your name"
                   placeholderTextColor={colors.muted}
+                  returnKeyType="done"
                 />
               </View>
-              <View className="flex-row gap-3 mb-3">
-                <View className="flex-1">
-                  <Text className="text-xs text-muted mb-1">Age</Text>
+              <View style={{ flexDirection: "row", gap: 10, marginBottom: 12 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 4 }}>Age</Text>
                   <TextInput
                     value={age}
                     onChangeText={setAge}
                     keyboardType="number-pad"
-                    className="bg-background border border-border rounded-xl px-3 py-2.5 text-foreground"
+                    style={{
+                      backgroundColor: colors.background,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      borderRadius: 12,
+                      paddingHorizontal: 14,
+                      paddingVertical: 12,
+                      fontSize: 15,
+                      color: colors.foreground,
+                      textAlign: "center",
+                      textAlignVertical: "center",
+                    }}
                     placeholder="25"
                     placeholderTextColor={colors.muted}
+                    returnKeyType="done"
                   />
                 </View>
-                <View className="flex-1">
-                  <Text className="text-xs text-muted mb-1">Height (cm)</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 4 }}>Height (cm)</Text>
                   <TextInput
                     value={height}
                     onChangeText={setHeight}
                     keyboardType="decimal-pad"
-                    className="bg-background border border-border rounded-xl px-3 py-2.5 text-foreground"
+                    style={{
+                      backgroundColor: colors.background,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      borderRadius: 12,
+                      paddingHorizontal: 14,
+                      paddingVertical: 12,
+                      fontSize: 15,
+                      color: colors.foreground,
+                      textAlign: "center",
+                      textAlignVertical: "center",
+                    }}
                     placeholder="165"
                     placeholderTextColor={colors.muted}
+                    returnKeyType="done"
                   />
                 </View>
-                <View className="flex-1">
-                  <Text className="text-xs text-muted mb-1">Weight (kg)</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 4 }}>Weight (kg)</Text>
                   <TextInput
                     value={weight}
                     onChangeText={setWeight}
                     keyboardType="decimal-pad"
-                    className="bg-background border border-border rounded-xl px-3 py-2.5 text-foreground"
+                    style={{
+                      backgroundColor: colors.background,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      borderRadius: 12,
+                      paddingHorizontal: 14,
+                      paddingVertical: 12,
+                      fontSize: 15,
+                      color: colors.foreground,
+                      textAlign: "center",
+                      textAlignVertical: "center",
+                    }}
                     placeholder="60"
                     placeholderTextColor={colors.muted}
+                    returnKeyType="done"
                   />
                 </View>
               </View>
-              <View className="flex-row gap-3">
+              <View style={{ flexDirection: "row", gap: 10 }}>
                 <TouchableOpacity
                   onPress={() => setEditing(false)}
-                  className="flex-1 bg-border rounded-xl py-2.5 items-center"
+                  style={{
+                    flex: 1,
+                    backgroundColor: colors.border,
+                    borderRadius: 12,
+                    paddingVertical: 12,
+                    alignItems: "center",
+                  }}
                   activeOpacity={0.7}
                 >
-                  <Text className="text-foreground font-semibold">Cancel</Text>
+                  <Text style={{ color: colors.foreground, fontWeight: "600" }}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={handleSaveProfile}
-                  className="flex-1 bg-primary rounded-xl py-2.5 items-center"
+                  style={{
+                    flex: 1,
+                    backgroundColor: colors.primary,
+                    borderRadius: 12,
+                    paddingVertical: 12,
+                    alignItems: "center",
+                  }}
                   activeOpacity={0.7}
                 >
-                  <Text className="text-white font-semibold">Save</Text>
+                  <Text style={{ color: "#FFF", fontWeight: "600" }}>Save</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -139,76 +288,140 @@ export default function ProfileScreen() {
         {/* BMI Calculator Link */}
         <TouchableOpacity
           onPress={() => router.push("/bmi-calculator" as any)}
-          className="bg-surface rounded-2xl p-4 mb-3 flex-row items-center border border-border"
+          style={{
+            backgroundColor: colors.surface,
+            borderRadius: 16,
+            padding: 16,
+            marginBottom: 12,
+            flexDirection: "row",
+            alignItems: "center",
+            borderWidth: 1,
+            borderColor: colors.border,
+          }}
           activeOpacity={0.7}
         >
-          <View className="w-10 h-10 rounded-full bg-primary/10 items-center justify-center">
+          <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary + "15", alignItems: "center", justifyContent: "center" }}>
             <MaterialIcons name="monitor-weight" size={22} color={colors.primary} />
           </View>
-          <View className="flex-1 ml-3">
-            <Text className="text-sm font-semibold text-foreground">BMI Calculator</Text>
-            <Text className="text-xs text-muted">Check your Body Mass Index</Text>
+          <View style={{ flex: 1, marginLeft: 12 }}>
+            <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground }}>BMI Calculator</Text>
+            <Text style={{ fontSize: 12, color: colors.muted }}>Check your Body Mass Index</Text>
           </View>
           <MaterialIcons name="chevron-right" size={22} color={colors.muted} />
         </TouchableOpacity>
 
         {/* Workout Schedule */}
         <View className="bg-surface rounded-2xl p-4 mb-4">
-          <Text className="text-sm font-semibold text-foreground mb-3">Workout Schedule</Text>
-          <Text className="text-xs text-muted mb-3">Tap to toggle rest days</Text>
-          <View className="flex-row justify-between">
+          <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 8 }}>Workout Schedule</Text>
+          <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 12 }}>Tap to toggle rest days</Text>
+          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
             {DAYS.map((day, idx) => {
               const isRest = state.schedule[idx]?.isRestDay ?? false;
               return (
                 <TouchableOpacity
                   key={day}
                   onPress={() => toggleRestDay(idx)}
-                  style={isRest ? { backgroundColor: colors.border } : { backgroundColor: colors.primary }}
-                  className="w-10 h-10 rounded-full items-center justify-center"
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    backgroundColor: isRest ? colors.border : colors.primary,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
                   activeOpacity={0.7}
                 >
-                  <Text className={`text-xs font-semibold ${isRest ? "text-muted" : "text-white"}`}>{day}</Text>
+                  <Text style={{ fontSize: 11, fontWeight: "600", color: isRest ? colors.muted : "#FFF" }}>{day}</Text>
                 </TouchableOpacity>
               );
             })}
           </View>
-          <View className="flex-row items-center mt-3 gap-4">
-            <View className="flex-row items-center">
-              <View className="w-3 h-3 rounded-full bg-primary mr-1" />
-              <Text className="text-xs text-muted">Workout</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", marginTop: 12, gap: 16 }}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: colors.primary, marginRight: 4 }} />
+              <Text style={{ fontSize: 12, color: colors.muted }}>Workout</Text>
             </View>
-            <View className="flex-row items-center">
-              <View style={{ backgroundColor: colors.border }} className="w-3 h-3 rounded-full mr-1" />
-              <Text className="text-xs text-muted">Rest</Text>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: colors.border, marginRight: 4 }} />
+              <Text style={{ fontSize: 12, color: colors.muted }}>Rest</Text>
             </View>
           </View>
         </View>
 
         {/* Settings */}
-        <Text className="text-base font-semibold text-foreground mb-3">Settings</Text>
-        <View className="bg-surface rounded-2xl overflow-hidden mb-6">
-          <View className="flex-row items-center p-4 border-b border-border">
+        <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginBottom: 12 }}>Settings</Text>
+        <View style={{ backgroundColor: colors.surface, borderRadius: 16, overflow: "hidden", marginBottom: 24 }}>
+          {/* Notifications */}
+          <TouchableOpacity
+            onPress={() => setShowNotifInfo(!showNotifInfo)}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              padding: 16,
+              borderBottomWidth: 1,
+              borderBottomColor: colors.border,
+            }}
+            activeOpacity={0.7}
+          >
             <MaterialIcons name="notifications" size={20} color={colors.primary} />
-            <Text className="text-sm text-foreground ml-3 flex-1">Notifications</Text>
-            <MaterialIcons name="chevron-right" size={20} color={colors.muted} />
-          </View>
-          <View className="flex-row items-center p-4 border-b border-border">
-            <MaterialIcons name="language" size={20} color={colors.primary} />
-            <Text className="text-sm text-foreground ml-3 flex-1">Units: Metric</Text>
-            <MaterialIcons name="chevron-right" size={20} color={colors.muted} />
-          </View>
-          <View className="flex-row items-center p-4">
+            <Text style={{ fontSize: 14, color: colors.foreground, marginLeft: 12, flex: 1 }}>Notifications</Text>
+            <MaterialIcons name={showNotifInfo ? "expand-less" : "chevron-right"} size={20} color={colors.muted} />
+          </TouchableOpacity>
+          {showNotifInfo && (
+            <View style={{ padding: 16, paddingTop: 0, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+              <Text style={{ fontSize: 12, color: colors.muted, lineHeight: 18 }}>
+                Notifications will remind you about daily workouts and water intake. Enable them in your device settings for the best experience.
+              </Text>
+            </View>
+          )}
+
+          {/* Units */}
+          <TouchableOpacity
+            onPress={toggleUnit}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              padding: 16,
+              borderBottomWidth: 1,
+              borderBottomColor: colors.border,
+            }}
+            activeOpacity={0.7}
+          >
+            <MaterialIcons name="straighten" size={20} color={colors.primary} />
+            <Text style={{ fontSize: 14, color: colors.foreground, marginLeft: 12, flex: 1 }}>
+              Units: {unitSystem === "metric" ? "Metric (kg/cm)" : "Imperial (lb/in)"}
+            </Text>
+            <MaterialIcons name="swap-horiz" size={20} color={colors.muted} />
+          </TouchableOpacity>
+
+          {/* About */}
+          <TouchableOpacity
+            onPress={() => setShowAboutInfo(!showAboutInfo)}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              padding: 16,
+            }}
+            activeOpacity={0.7}
+          >
             <MaterialIcons name="info" size={20} color={colors.primary} />
-            <Text className="text-sm text-foreground ml-3 flex-1">About</Text>
-            <Text className="text-xs text-muted">v1.0.0</Text>
-          </View>
+            <Text style={{ fontSize: 14, color: colors.foreground, marginLeft: 12, flex: 1 }}>About</Text>
+            <Text style={{ fontSize: 12, color: colors.muted }}>v1.0.0</Text>
+          </TouchableOpacity>
+          {showAboutInfo && (
+            <View style={{ padding: 16, paddingTop: 0 }}>
+              <Text style={{ fontSize: 12, color: colors.muted, lineHeight: 18 }}>
+                FitHer is a home workout app designed exclusively for women. It provides personalized workout plans, menstrual cycle tracking, BMI monitoring, and more to help you achieve your fitness goals.
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Footer */}
-        <View className="items-center mb-8">
-          <Text className="text-sm text-primary font-semibold">FitHer</Text>
-          <Text className="text-xs text-muted mt-1">Developed by Markus with ❤️</Text>
-          <Text className="text-xs text-muted mt-0.5">Your fitness journey, your way.</Text>
+        <View style={{ alignItems: "center", marginBottom: 32 }}>
+          <Text style={{ fontSize: 14, color: colors.primary, fontWeight: "600" }}>FitHer</Text>
+          <Text style={{ fontSize: 12, color: colors.muted, marginTop: 4 }}>Developed by Markus with ❤️</Text>
+          <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>Your fitness journey, your way.</Text>
         </View>
       </ScrollView>
     </ScreenContainer>

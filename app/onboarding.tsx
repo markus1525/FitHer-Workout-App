@@ -47,7 +47,7 @@ export default function OnboardingScreen() {
 
   const canProceed = () => {
     switch (step) {
-      case 0: return true; // welcome
+      case 0: return true;
       case 1: return name.trim().length > 0;
       case 2: return age.length > 0 && height.length > 0 && weight.length > 0;
       case 3: return goal.length > 0;
@@ -60,25 +60,31 @@ export default function OnboardingScreen() {
     <ScreenContainer edges={["top", "bottom", "left", "right"]} className="px-6">
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
         {/* Progress */}
-        <View className="flex-row gap-1.5 mt-4 mb-8">
+        <View style={{ flexDirection: "row", gap: 6, marginTop: 16, marginBottom: 32 }}>
           {[0, 1, 2, 3, 4].map((i) => (
             <View
               key={i}
-              className="flex-1 h-1 rounded-full"
-              style={{ backgroundColor: i <= step ? colors.primary : colors.border }}
+              style={{
+                flex: 1,
+                height: 4,
+                borderRadius: 2,
+                backgroundColor: i <= step ? colors.primary : colors.border,
+              }}
             />
           ))}
         </View>
 
         {/* Step 0: Welcome */}
         {step === 0 && (
-          <View className="flex-1 items-center justify-center">
-            <Text className="text-6xl mb-4">🌸</Text>
-            <Text className="text-3xl font-bold text-foreground text-center">Welcome to FitHer</Text>
-            <Text className="text-base text-muted text-center mt-3 px-4">
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+            <Text style={{ fontSize: 56 }}>🌸</Text>
+            <Text style={{ fontSize: 28, fontWeight: "700", color: colors.foreground, textAlign: "center", marginTop: 16 }}>
+              Welcome to FitHer
+            </Text>
+            <Text style={{ fontSize: 16, color: colors.muted, textAlign: "center", marginTop: 12, paddingHorizontal: 16 }}>
               Your personal home workout companion designed just for women.
             </Text>
-            <Text className="text-sm text-muted text-center mt-2 px-4">
+            <Text style={{ fontSize: 14, color: colors.muted, textAlign: "center", marginTop: 8, paddingHorizontal: 16 }}>
               Let's set up your profile to personalize your experience.
             </Text>
           </View>
@@ -86,15 +92,30 @@ export default function OnboardingScreen() {
 
         {/* Step 1: Name */}
         {step === 1 && (
-          <View className="flex-1 justify-center">
-            <Text className="text-2xl font-bold text-foreground mb-2">What's your name?</Text>
-            <Text className="text-sm text-muted mb-6">We'll use this to personalize your experience.</Text>
+          <View style={{ flex: 1, justifyContent: "center" }}>
+            <Text style={{ fontSize: 24, fontWeight: "700", color: colors.foreground, marginBottom: 8 }}>
+              What's your name?
+            </Text>
+            <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 24 }}>
+              We'll use this to personalize your experience.
+            </Text>
             <TextInput
               value={name}
               onChangeText={setName}
               placeholder="Enter your name"
               placeholderTextColor={colors.muted}
-              className="bg-surface border border-border rounded-2xl px-4 py-4 text-lg text-foreground"
+              style={{
+                backgroundColor: colors.surface,
+                borderWidth: 1,
+                borderColor: colors.border,
+                borderRadius: 16,
+                paddingHorizontal: 18,
+                paddingVertical: 16,
+                fontSize: 17,
+                color: colors.foreground,
+                textAlign: "left",
+                textAlignVertical: "center",
+              }}
               autoFocus
               returnKeyType="done"
             />
@@ -103,41 +124,81 @@ export default function OnboardingScreen() {
 
         {/* Step 2: Body Info */}
         {step === 2 && (
-          <View className="flex-1 justify-center">
-            <Text className="text-2xl font-bold text-foreground mb-2">Your measurements</Text>
-            <Text className="text-sm text-muted mb-6">This helps us calculate BMI and recommend workouts.</Text>
-            <View className="gap-4">
+          <View style={{ flex: 1, justifyContent: "center" }}>
+            <Text style={{ fontSize: 24, fontWeight: "700", color: colors.foreground, marginBottom: 8 }}>
+              Your measurements
+            </Text>
+            <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 24 }}>
+              This helps us calculate BMI and recommend workouts.
+            </Text>
+            <View style={{ gap: 16 }}>
               <View>
-                <Text className="text-sm text-muted mb-1">Age</Text>
+                <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 6 }}>Age</Text>
                 <TextInput
                   value={age}
                   onChangeText={setAge}
                   placeholder="25"
                   placeholderTextColor={colors.muted}
                   keyboardType="number-pad"
-                  className="bg-surface border border-border rounded-2xl px-4 py-3.5 text-base text-foreground"
+                  style={{
+                    backgroundColor: colors.surface,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    borderRadius: 16,
+                    paddingHorizontal: 18,
+                    paddingVertical: 14,
+                    fontSize: 16,
+                    color: colors.foreground,
+                    textAlign: "left",
+                    textAlignVertical: "center",
+                  }}
+                  returnKeyType="done"
                 />
               </View>
               <View>
-                <Text className="text-sm text-muted mb-1">Height (cm)</Text>
+                <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 6 }}>Height (cm)</Text>
                 <TextInput
                   value={height}
                   onChangeText={setHeight}
                   placeholder="165"
                   placeholderTextColor={colors.muted}
                   keyboardType="decimal-pad"
-                  className="bg-surface border border-border rounded-2xl px-4 py-3.5 text-base text-foreground"
+                  style={{
+                    backgroundColor: colors.surface,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    borderRadius: 16,
+                    paddingHorizontal: 18,
+                    paddingVertical: 14,
+                    fontSize: 16,
+                    color: colors.foreground,
+                    textAlign: "left",
+                    textAlignVertical: "center",
+                  }}
+                  returnKeyType="done"
                 />
               </View>
               <View>
-                <Text className="text-sm text-muted mb-1">Weight (kg)</Text>
+                <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 6 }}>Weight (kg)</Text>
                 <TextInput
                   value={weight}
                   onChangeText={setWeight}
                   placeholder="60"
                   placeholderTextColor={colors.muted}
                   keyboardType="decimal-pad"
-                  className="bg-surface border border-border rounded-2xl px-4 py-3.5 text-base text-foreground"
+                  style={{
+                    backgroundColor: colors.surface,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    borderRadius: 16,
+                    paddingHorizontal: 18,
+                    paddingVertical: 14,
+                    fontSize: 16,
+                    color: colors.foreground,
+                    textAlign: "left",
+                    textAlignVertical: "center",
+                  }}
+                  returnKeyType="done"
                 />
               </View>
             </View>
@@ -146,22 +207,33 @@ export default function OnboardingScreen() {
 
         {/* Step 3: Fitness Goal */}
         {step === 3 && (
-          <View className="flex-1 justify-center">
-            <Text className="text-2xl font-bold text-foreground mb-2">What's your goal?</Text>
-            <Text className="text-sm text-muted mb-6">We'll tailor your workout plans accordingly.</Text>
-            <View className="gap-3">
+          <View style={{ flex: 1, justifyContent: "center" }}>
+            <Text style={{ fontSize: 24, fontWeight: "700", color: colors.foreground, marginBottom: 8 }}>
+              What's your goal?
+            </Text>
+            <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 24 }}>
+              We'll tailor your workout plans accordingly.
+            </Text>
+            <View style={{ gap: 12 }}>
               {FITNESS_GOALS.map((g) => (
                 <TouchableOpacity
                   key={g.id}
                   onPress={() => setGoal(g.id)}
-                  style={goal === g.id ? { borderColor: colors.primary, backgroundColor: colors.primary + "10" } : { borderColor: colors.border }}
-                  className="flex-row items-center p-4 rounded-2xl border"
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    padding: 16,
+                    borderRadius: 16,
+                    borderWidth: 1,
+                    borderColor: goal === g.id ? colors.primary : colors.border,
+                    backgroundColor: goal === g.id ? colors.primary + "10" : "transparent",
+                  }}
                   activeOpacity={0.7}
                 >
-                  <Text className="text-2xl mr-3">{g.icon}</Text>
-                  <View className="flex-1">
-                    <Text className="text-base font-semibold text-foreground">{g.label}</Text>
-                    <Text className="text-xs text-muted">{g.desc}</Text>
+                  <Text style={{ fontSize: 24, marginRight: 12 }}>{g.icon}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground }}>{g.label}</Text>
+                    <Text style={{ fontSize: 12, color: colors.muted }}>{g.desc}</Text>
                   </View>
                   {goal === g.id && <MaterialIcons name="check-circle" size={24} color={colors.primary} />}
                 </TouchableOpacity>
@@ -172,22 +244,31 @@ export default function OnboardingScreen() {
 
         {/* Step 4: Fitness Level */}
         {step === 4 && (
-          <View className="flex-1 justify-center">
-            <Text className="text-2xl font-bold text-foreground mb-2">Your fitness level?</Text>
-            <Text className="text-sm text-muted mb-6">This helps us pick the right intensity.</Text>
-            <View className="gap-3">
+          <View style={{ flex: 1, justifyContent: "center" }}>
+            <Text style={{ fontSize: 24, fontWeight: "700", color: colors.foreground, marginBottom: 8 }}>
+              Your fitness level?
+            </Text>
+            <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 24 }}>
+              This helps us pick the right intensity.
+            </Text>
+            <View style={{ gap: 12 }}>
               {FITNESS_LEVELS.map((l) => (
                 <TouchableOpacity
                   key={l.id}
                   onPress={() => setLevel(l.id)}
-                  style={level === l.id ? { borderColor: colors.primary, backgroundColor: colors.primary + "10" } : { borderColor: colors.border }}
-                  className="p-4 rounded-2xl border"
+                  style={{
+                    padding: 16,
+                    borderRadius: 16,
+                    borderWidth: 1,
+                    borderColor: level === l.id ? colors.primary : colors.border,
+                    backgroundColor: level === l.id ? colors.primary + "10" : "transparent",
+                  }}
                   activeOpacity={0.7}
                 >
-                  <View className="flex-row items-center justify-between">
+                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
                     <View>
-                      <Text className="text-base font-semibold text-foreground">{l.label}</Text>
-                      <Text className="text-xs text-muted mt-0.5">{l.desc}</Text>
+                      <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground }}>{l.label}</Text>
+                      <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>{l.desc}</Text>
                     </View>
                     {level === l.id && <MaterialIcons name="check-circle" size={24} color={colors.primary} />}
                   </View>
@@ -198,14 +279,22 @@ export default function OnboardingScreen() {
         )}
 
         {/* Navigation Buttons */}
-        <View className="flex-row gap-3 mt-8 mb-6">
+        <View style={{ flexDirection: "row", gap: 12, marginTop: 32, marginBottom: 24 }}>
           {step > 0 && (
             <TouchableOpacity
               onPress={() => setStep(step - 1)}
-              className="flex-1 bg-surface border border-border rounded-2xl py-4 items-center"
+              style={{
+                flex: 1,
+                backgroundColor: colors.surface,
+                borderWidth: 1,
+                borderColor: colors.border,
+                borderRadius: 16,
+                paddingVertical: 16,
+                alignItems: "center",
+              }}
               activeOpacity={0.7}
             >
-              <Text className="text-foreground font-semibold">Back</Text>
+              <Text style={{ color: colors.foreground, fontWeight: "600" }}>Back</Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity
@@ -216,12 +305,18 @@ export default function OnboardingScreen() {
                 setStep(step + 1);
               }
             }}
-            className="flex-1 bg-primary rounded-2xl py-4 items-center"
-            style={{ opacity: canProceed() ? 1 : 0.5 }}
+            style={{
+              flex: 1,
+              backgroundColor: colors.primary,
+              borderRadius: 16,
+              paddingVertical: 16,
+              alignItems: "center",
+              opacity: canProceed() ? 1 : 0.5,
+            }}
             activeOpacity={0.7}
             disabled={!canProceed()}
           >
-            <Text className="text-white font-bold text-base">
+            <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16 }}>
               {step === 0 ? "Get Started" : step === 4 ? "Complete" : "Next"}
             </Text>
           </TouchableOpacity>
