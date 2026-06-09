@@ -1,6 +1,7 @@
-import { ScrollView, Text, View, TouchableOpacity, TextInput, Alert, Platform, Image, Linking } from "react-native";
+import { ScrollView, Text, View, TouchableOpacity, TextInput, Alert, Platform, Image, Linking, Switch } from "react-native";
 import { useState, useEffect } from "react";
 import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as ImagePicker from "expo-image-picker";
 import { ScreenContainer } from "@/components/screen-container";
@@ -83,6 +84,30 @@ export default function ProfileScreen() {
   const [heightIn, setHeightIn] = useState("");
   const [weight, setWeight] = useState(String(state.profile?.weight || ""));
   const [showAboutInfo, setShowAboutInfo] = useState(false);
+  const [notifEnabled, setNotifEnabled] = useState(false);
+  const [videoEnabled, setVideoEnabled] = useState(true);
+
+  useEffect(() => {
+    AsyncStorage.getItem("fither_notifications_enabled").then((val) => {
+      setNotifEnabled(val === "true");
+    });
+    AsyncStorage.getItem("fither_welcome_video_enabled").then((val) => {
+      setVideoEnabled(val !== "false");
+    });
+  }, []);
+
+  const handleToggleNotif = async (val: boolean) => {
+    setNotifEnabled(val);
+    await AsyncStorage.setItem("fither_notifications_enabled", val ? "true" : "false");
+    if (val && Platform.OS !== "web") {
+      Linking.openSettings();
+    }
+  };
+
+  const handleToggleVideo = async (val: boolean) => {
+    setVideoEnabled(val);
+    await AsyncStorage.setItem("fither_welcome_video_enabled", val ? "true" : "false");
+  };
 
   const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -567,7 +592,33 @@ export default function ProfileScreen() {
         {/* Settings */}
         <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginBottom: 12 }}>Settings</Text>
         <View style={{ backgroundColor: colors.surface, borderRadius: 16, overflow: "hidden", marginBottom: 24 }}>
-          {/* In-App Reminders */}
+          {/* Notifications */}
+          <View
+            style={{
+              padding: 16,
+              borderBottomWidth: 1,
+              borderBottomColor: colors.border,
+            }}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <MaterialIcons name="notifications" size={20} color={colors.primary} />
+              <Text style={{ fontSize: 14, color: colors.foreground, marginLeft: 12, flex: 1 }}>
+                Notifications
+              </Text>
+              <Switch
+                value={notifEnabled}
+                onValueChange={handleToggleNotif}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor={Platform.OS === "android" ? (notifEnabled ? colors.primary : "#f4f3f4") : undefined}
+                style={{ transform: Platform.OS === "ios" ? [{ scaleX: 0.8 }, { scaleY: 0.8 }] : undefined }}
+              />
+            </View>
+            <Text style={{ fontSize: 11, color: colors.muted, marginTop: 6, lineHeight: 16, paddingLeft: 32 }}>
+              Notifications will remind you about daily workouts and water intake. Enable them in your device settings for the best experience.
+            </Text>
+          </View>
+
+          {/* Startup Motivation Video */}
           <View
             style={{
               flexDirection: "row",
@@ -577,16 +628,17 @@ export default function ProfileScreen() {
               borderBottomColor: colors.border,
             }}
           >
-            <MaterialIcons name="notifications-active" size={20} color={colors.primary} />
-            <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={{ fontSize: 14, color: colors.foreground }}>Daily Reminders</Text>
-              <Text style={{ fontSize: 11, color: colors.muted, marginTop: 2, lineHeight: 16 }}>
-                A banner appears on the home screen if you haven't worked out today.
-              </Text>
-            </View>
-            <View style={{ backgroundColor: "#4CAF5020", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
-              <Text style={{ fontSize: 11, color: "#4CAF50", fontWeight: "700" }}>Active</Text>
-            </View>
+            <MaterialIcons name="play-circle-outline" size={20} color={colors.primary} />
+            <Text style={{ fontSize: 14, color: colors.foreground, marginLeft: 12, flex: 1 }}>
+              Startup Motivation Video
+            </Text>
+            <Switch
+              value={videoEnabled}
+              onValueChange={handleToggleVideo}
+              trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor={Platform.OS === "android" ? (videoEnabled ? colors.primary : "#f4f3f4") : undefined}
+              style={{ transform: Platform.OS === "ios" ? [{ scaleX: 0.8 }, { scaleY: 0.8 }] : undefined }}
+            />
           </View>
 
           {/* Units */}

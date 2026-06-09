@@ -1,12 +1,13 @@
 import { ScrollView, Text, View, TouchableOpacity, Platform } from "react-native";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ScreenContainer } from "@/components/screen-container";
 import { useApp } from "@/lib/app-context";
 import { MOTIVATIONAL_QUOTES, DEFAULT_WORKOUT_PLANS, CYCLE_PHASES } from "@/data/exercises";
 import { useColors } from "@/hooks/use-colors";
+import { MotivationVideoModal } from "@/components/ui/motivation-video-modal";
 
 function getCyclePhase(cycleData: any[]): string | null {
   if (!cycleData || cycleData.length === 0) return null;
@@ -30,6 +31,8 @@ export default function HomeScreen() {
   const colors = useColors();
   const [quote, setQuote] = useState("");
   const [reminderDismissed, setReminderDismissed] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
+  const hasShownVideoRef = useRef(false);
 
   const today = new Date().toISOString().split("T")[0];
   const REMINDER_KEY = `fither_reminder_dismissed_${today}`;
@@ -53,6 +56,17 @@ export default function HomeScreen() {
   useEffect(() => {
     if (!state.isLoading && !state.onboardingDone) {
       router.replace("/onboarding");
+    }
+  }, [state.isLoading, state.onboardingDone]);
+
+  useEffect(() => {
+    if (!state.isLoading && state.onboardingDone && !hasShownVideoRef.current) {
+      AsyncStorage.getItem("fither_welcome_video_enabled").then((val) => {
+        if (val !== "false") {
+          hasShownVideoRef.current = true;
+          setShowVideo(true);
+        }
+      });
     }
   }, [state.isLoading, state.onboardingDone]);
 
@@ -84,6 +98,14 @@ export default function HomeScreen() {
 
   return (
     <ScreenContainer className="px-4 pt-2">
+      <MotivationVideoModal
+        visible={showVideo}
+        onClose={() => setShowVideo(false)}
+        onDontShowAgain={() => {
+          AsyncStorage.setItem("fither_welcome_video_enabled", "false");
+          setShowVideo(false);
+        }}
+      />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
         {/* Greeting */}
         <View style={{ marginBottom: 16 }}>
