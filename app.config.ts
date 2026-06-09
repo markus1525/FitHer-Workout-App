@@ -83,6 +83,7 @@ const config: ExpoConfig = {
     bundler: "metro",
     output: "static",
     favicon: "./assets/images/favicon.png",
+    baseUrl: "/FitHer-Workout-App",
   },
   plugins: [
     "expo-router",
