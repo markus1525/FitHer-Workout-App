@@ -83,7 +83,6 @@ const config: ExpoConfig = {
     bundler: "metro",
     output: "static",
     favicon: "./assets/images/favicon.png",
-    baseUrl: "/FitHer-Workout-App",
   },
   plugins: [
     "expo-router",
@@ -125,6 +124,7 @@ const config: ExpoConfig = {
   experiments: {
     typedRoutes: true,
     reactCompiler: true,
+    baseUrl: "/FitHer-Workout-App",
   },
 };
 
