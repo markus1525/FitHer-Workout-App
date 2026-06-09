@@ -58,7 +58,7 @@ export const EXERCISES: Exercise[] = [
     calories: 3,
     bodyPart: "Arms",
     difficulty: "beginner",
-    youtubeId: "bOwMfBv5kzE",
+    youtubeId: "140RTNMciH8",
     image: "💪",
   },
   // LOWER BODY
@@ -111,7 +111,7 @@ export const EXERCISES: Exercise[] = [
     calories: 7,
     bodyPart: "Glutes",
     difficulty: "beginner",
-    youtubeId: "eFGXjHLMmMc",
+    youtubeId: "SJ1Xuz9D-ZQ",
     image: "🍑",
   },
   {
@@ -124,7 +124,7 @@ export const EXERCISES: Exercise[] = [
     calories: 6,
     bodyPart: "Glutes",
     difficulty: "beginner",
-    youtubeId: "La3xzXoFhKg",
+    youtubeId: "vir4FI-ag8k",
     image: "🍑",
   },
   {
@@ -135,7 +135,7 @@ export const EXERCISES: Exercise[] = [
     calories: 5,
     bodyPart: "Legs",
     difficulty: "intermediate",
-    youtubeId: "y-wV4Lk6owQ",
+    youtubeId: "-cdph8hv0O0",
     image: "🧱",
   },
   {
@@ -148,7 +148,7 @@ export const EXERCISES: Exercise[] = [
     calories: 11,
     bodyPart: "Legs",
     difficulty: "intermediate",
-    youtubeId: "sqDGkIEzWQo",
+    youtubeId: "NdNQ51TJPZw",
     image: "🦵",
   },
   {
@@ -161,7 +161,7 @@ export const EXERCISES: Exercise[] = [
     calories: 15,
     bodyPart: "Legs",
     difficulty: "advanced",
-    youtubeId: "A-cFYGvaKcE",
+    youtubeId: "CVaEhXotL7M",
     image: "⚡",
   },
   // UPPER BODY
@@ -201,7 +201,7 @@ export const EXERCISES: Exercise[] = [
     calories: 10,
     bodyPart: "Arms",
     difficulty: "intermediate",
-    youtubeId: "LEFtlLZjJRo",
+    youtubeId: "QGnz__47PCo",
     image: "💪",
   },
   {
@@ -304,7 +304,7 @@ export const EXERCISES: Exercise[] = [
     calories: 11,
     bodyPart: "Core",
     difficulty: "advanced",
-    youtubeId: "iP2fjvG0yOg",
+    youtubeId: "0UIS7TDHMQU",
     image: "⚡",
   },
   // CARDIO
@@ -330,7 +330,7 @@ export const EXERCISES: Exercise[] = [
     calories: 8,
     bodyPart: "Cardio",
     difficulty: "beginner",
-    youtubeId: "Kkm0fMKNIEI",
+    youtubeId: "Vo1TxvK70bE",
     image: "🏃‍♀️",
   },
   {
@@ -342,7 +342,7 @@ export const EXERCISES: Exercise[] = [
     calories: 10,
     bodyPart: "Cardio",
     difficulty: "intermediate",
-    youtubeId: "d1J3NLNWAPU",
+    youtubeId: "OREcT0USjVQ",
     image: "⛸️",
   },
   // STRETCHING / COOLDOWN
@@ -377,7 +377,7 @@ export const EXERCISES: Exercise[] = [
     calories: 2,
     bodyPart: "Stretch",
     difficulty: "beginner",
-    youtubeId: "On1yrDzCFOA",
+    youtubeId: "kzAsm4WQqvQ",
     image: "🧘‍♀️",
   },
   {
@@ -388,7 +388,7 @@ export const EXERCISES: Exercise[] = [
     calories: 2,
     bodyPart: "Stretch",
     difficulty: "beginner",
-    youtubeId: "3MsaT4GBqwA",
+    youtubeId: "KXTDXESVBrY",
     image: "🧘‍♀️",
   },
 ];

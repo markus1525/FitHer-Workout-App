@@ -65,7 +65,7 @@ export default function HomeScreen() {
 
   return (
     <ScreenContainer className="px-4 pt-2">
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
         {/* Greeting */}
         <View style={{ marginBottom: 16 }}>
           <Text style={{ fontSize: 24, fontWeight: "700", color: colors.foreground }}>

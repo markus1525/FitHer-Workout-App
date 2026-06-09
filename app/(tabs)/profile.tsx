@@ -1,5 +1,5 @@
-import { ScrollView, Text, View, TouchableOpacity, TextInput, Alert, Platform, Image } from "react-native";
-import { useState } from "react";
+import { ScrollView, Text, View, TouchableOpacity, TextInput, Alert, Platform, Image, Switch, Linking, AppState } from "react-native";
+import { useState, useEffect } from "react";
 import { useRouter } from "expo-router";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as ImagePicker from "expo-image-picker";
@@ -12,6 +12,85 @@ export default function ProfileScreen() {
   const { state, updateProfile, updateSchedule } = useApp();
   const colors = useColors();
   const [editing, setEditing] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+
+  const checkNotificationPermission = async () => {
+    if (Platform.OS === "web") return;
+    try {
+      const Notifications = require("expo-notifications");
+      const { status } = await Notifications.getPermissionsAsync();
+      setNotificationsEnabled(status === "granted");
+    } catch (error) {
+      console.log("Error checking notification permissions", error);
+    }
+  };
+
+  useEffect(() => {
+    checkNotificationPermission();
+
+    // Recheck permission when app returns to foreground
+    const subscription = AppState.addEventListener("change", (nextAppState) => {
+      if (nextAppState === "active") {
+        checkNotificationPermission();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
+  const handleToggleNotifications = async () => {
+    if (Platform.OS === "web") {
+      Alert.alert(
+        "Notifications",
+        "To manage notifications in your browser, please update your browser site settings."
+      );
+      return;
+    }
+    // Direct user to device app settings
+    try {
+      await Linking.openSettings();
+    } catch (error) {
+      Alert.alert("Error", "Unable to open device settings.");
+    }
+  };
+
+  useEffect(() => {
+    if (Platform.OS === "web") {
+      const handleBeforeInstallPrompt = (e: any) => {
+        e.preventDefault();
+        setDeferredPrompt(e);
+      };
+      window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      return () => {
+        window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      };
+    }
+  }, []);
+
+  const handleAddToHomeScreen = async () => {
+    if (Platform.OS === "web" && deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === "accepted") {
+        setDeferredPrompt(null);
+      }
+    } else {
+      if (Platform.OS === "web") {
+        Alert.alert(
+          "Install FitHer",
+          "To add FitHer to your home screen, tap your browser's menu button (such as the Share button in Safari on iOS, or the menu icon/three dots in Chrome) and select 'Add to Home Screen'."
+        );
+      } else {
+        Alert.alert(
+          "Already Installed",
+          "You are already running the app as a native application!"
+        );
+      }
+    }
+  };
   const [name, setName] = useState(state.profile?.name || "");
   const [age, setAge] = useState(String(state.profile?.age || ""));
   const [height, setHeight] = useState(String(state.profile?.height || ""));
@@ -85,7 +164,7 @@ export default function ProfileScreen() {
 
   return (
     <ScreenContainer className="px-4 pt-2">
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
         <Text className="text-2xl font-bold text-foreground mb-4">Profile</Text>
 
         {/* Profile Card */}
@@ -348,6 +427,40 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        {/* Install FitHer */}
+        <View
+          style={{
+            backgroundColor: colors.surface,
+            borderRadius: 16,
+            padding: 16,
+            marginBottom: 16,
+            borderWidth: 1,
+            borderColor: colors.border,
+          }}
+        >
+          <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 6 }}>
+            Install FitHer
+          </Text>
+          <Text style={{ fontSize: 12, color: colors.muted, lineHeight: 18, marginBottom: 14 }}>
+            Add FitHer to your home screen to use it like a normal app, full screen and offline. Data won't lose.
+          </Text>
+          <TouchableOpacity
+            onPress={handleAddToHomeScreen}
+            style={{
+              backgroundColor: colors.primary,
+              borderRadius: 12,
+              paddingVertical: 12,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            activeOpacity={0.8}
+          >
+            <Text style={{ color: "#FFF", fontWeight: "600", fontSize: 14 }}>
+              Add to home screen
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Settings */}
         <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginBottom: 12 }}>Settings</Text>
         <View style={{ backgroundColor: colors.surface, borderRadius: 16, overflow: "hidden", marginBottom: 24 }}>
@@ -365,10 +478,17 @@ export default function ProfileScreen() {
           >
             <MaterialIcons name="notifications" size={20} color={colors.primary} />
             <Text style={{ fontSize: 14, color: colors.foreground, marginLeft: 12, flex: 1 }}>Notifications</Text>
-            <MaterialIcons name={showNotifInfo ? "expand-less" : "chevron-right"} size={20} color={colors.muted} />
+            <Switch
+              value={notificationsEnabled}
+              onValueChange={handleToggleNotifications}
+              trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor={Platform.OS === "android" ? (notificationsEnabled ? colors.primary : "#f4f3f4") : undefined}
+              style={{ marginRight: 8, transform: Platform.OS === "ios" ? [{ scaleX: 0.8 }, { scaleY: 0.8 }] : undefined }}
+            />
+            <MaterialIcons name={showNotifInfo ? "expand-less" : "expand-more"} size={20} color={colors.muted} />
           </TouchableOpacity>
           {showNotifInfo && (
-            <View style={{ padding: 16, paddingTop: 0, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+            <View style={{ padding: 16, paddingLeft: 48, paddingTop: 12, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
               <Text style={{ fontSize: 12, color: colors.muted, lineHeight: 18 }}>
                 Notifications will remind you about daily workouts and water intake. Enable them in your device settings for the best experience.
               </Text>
@@ -409,7 +529,7 @@ export default function ProfileScreen() {
             <Text style={{ fontSize: 12, color: colors.muted }}>v1.0.0</Text>
           </TouchableOpacity>
           {showAboutInfo && (
-            <View style={{ padding: 16, paddingTop: 0 }}>
+            <View style={{ padding: 16, paddingLeft: 48, paddingTop: 12, paddingBottom: 16 }}>
               <Text style={{ fontSize: 12, color: colors.muted, lineHeight: 18 }}>
                 FitHer is a home workout app designed exclusively for women. It provides personalized workout plans, menstrual cycle tracking, BMI monitoring, and more to help you achieve your fitness goals.
               </Text>

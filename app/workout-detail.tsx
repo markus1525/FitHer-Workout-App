@@ -65,7 +65,7 @@ export default function WorkoutDetailScreen() {
         <Text style={{ fontSize: 20, fontWeight: "700", color: colors.foreground, flex: 1 }} numberOfLines={1}>{plan.name}</Text>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
         {/* Plan Info */}
         <View style={{ backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 16 }}>
           <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 12 }}>{plan.description}</Text>
@@ -119,7 +119,7 @@ export default function WorkoutDetailScreen() {
                   style={{ backgroundColor: "#FF0000", borderRadius: 18, width: 36, height: 36, alignItems: "center", justifyContent: "center" }}
                   activeOpacity={0.7}
                 >
-                  <MaterialIcons name="play-arrow" size={20} color="#FFF" />
+                  <MaterialIcons name="play-arrow" size={20} color="#FFF" style={{ lineHeight: 20, marginLeft: 2 }} />
                 </TouchableOpacity>
               </View>
               <Text style={{ fontSize: 12, color: colors.muted, marginTop: 8, marginLeft: 52 }} numberOfLines={2}>{exercise.description}</Text>

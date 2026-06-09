@@ -52,7 +52,7 @@ export default function BMICalculatorScreen() {
         <Text style={{ fontSize: 20, fontWeight: "700", color: colors.foreground }}>BMI Calculator</Text>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
         {/* Input Card */}
         <View style={{ backgroundColor: colors.surface, borderRadius: 16, padding: 20, marginBottom: 16 }}>
           <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 16 }}>

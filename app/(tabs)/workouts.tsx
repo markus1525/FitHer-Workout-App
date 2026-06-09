@@ -94,11 +94,12 @@ export default function WorkoutsScreen() {
             paddingVertical: 10,
             borderRadius: 8,
             alignItems: "center",
+            justifyContent: "center",
             backgroundColor: activeTab === "default" ? colors.primary : "transparent",
           }}
           activeOpacity={0.7}
         >
-          <Text style={{ fontWeight: "600", fontSize: 14, color: activeTab === "default" ? "#FFF" : colors.muted }}>
+          <Text style={{ fontWeight: "600", fontSize: 14, color: activeTab === "default" ? "#FFF" : colors.muted, lineHeight: 20 }}>
             Suggested Plans
           </Text>
         </TouchableOpacity>
@@ -109,18 +110,24 @@ export default function WorkoutsScreen() {
             paddingVertical: 10,
             borderRadius: 8,
             alignItems: "center",
+            justifyContent: "center",
             backgroundColor: activeTab === "custom" ? colors.primary : "transparent",
           }}
           activeOpacity={0.7}
         >
-          <Text style={{ fontWeight: "600", fontSize: 14, color: activeTab === "custom" ? "#FFF" : colors.muted }}>
+          <Text style={{ fontWeight: "600", fontSize: 14, color: activeTab === "custom" ? "#FFF" : colors.muted, lineHeight: 20 }}>
             My Plans
           </Text>
         </TouchableOpacity>
       </View>
 
       {/* Filters */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16, maxHeight: 36 }}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={{ marginBottom: 16, height: 44, flexGrow: 0, flexShrink: 0 }}
+        contentContainerStyle={{ alignItems: "center" }}
+      >
         {["All", ...BODY_PARTS].map((filter) => (
           <TouchableOpacity
             key={filter}
@@ -145,12 +152,23 @@ export default function WorkoutsScreen() {
 
       {/* Plans List */}
       {filteredPlans.length === 0 ? (
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: 48 }}>
+        <View
+          style={{
+            backgroundColor: colors.surface,
+            borderRadius: 16,
+            padding: 24,
+            borderWidth: 1,
+            borderColor: colors.border,
+            alignItems: "center",
+            justifyContent: "center",
+            marginTop: 8,
+          }}
+        >
           <Text style={{ fontSize: 40 }}>🏋️‍♀️</Text>
           <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginTop: 12 }}>
             {activeTab === "custom" ? "No Custom Plans Yet" : "No Plans Found"}
           </Text>
-          <Text style={{ fontSize: 14, color: colors.muted, textAlign: "center", marginTop: 4, paddingHorizontal: 32 }}>
+          <Text style={{ fontSize: 14, color: colors.muted, textAlign: "center", marginTop: 4, paddingHorizontal: 16 }}>
             {activeTab === "custom"
               ? "Create your first custom workout plan!"
               : "Try a different filter."}
@@ -158,10 +176,18 @@ export default function WorkoutsScreen() {
           {activeTab === "custom" && (
             <TouchableOpacity
               onPress={() => router.push("/create-plan" as any)}
-              style={{ backgroundColor: colors.primary, borderRadius: 20, paddingHorizontal: 24, paddingVertical: 12, marginTop: 16 }}
+              style={{
+                backgroundColor: colors.primary,
+                borderRadius: 20,
+                paddingHorizontal: 24,
+                paddingVertical: 12,
+                marginTop: 16,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
               activeOpacity={0.7}
             >
-              <Text style={{ color: "#FFF", fontWeight: "600" }}>Create Plan</Text>
+              <Text style={{ color: "#FFF", fontWeight: "600", fontSize: 14 }}>Create Plan</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -171,7 +197,7 @@ export default function WorkoutsScreen() {
           renderItem={renderPlanCard}
           keyExtractor={(item) => item.id}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 100 }}
+          contentContainerStyle={{ paddingBottom: 24 }}
         />
       )}
     </ScreenContainer>

@@ -77,7 +77,7 @@ export default function CreatePlanScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
         {/* Plan Details */}
         <View style={{ backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 16 }}>
           <View style={{ marginBottom: 12 }}>
@@ -158,7 +158,12 @@ export default function CreatePlanScreen() {
         </Text>
 
         {/* Body Part Filter */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12, maxHeight: 36 }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ marginBottom: 12, height: 44, flexGrow: 0, flexShrink: 0 }}
+          contentContainerStyle={{ alignItems: "center" }}
+        >
           {["All", ...BODY_PARTS].map((part) => (
             <TouchableOpacity
               key={part}
