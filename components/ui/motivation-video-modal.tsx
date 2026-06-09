@@ -1,11 +1,9 @@
-import { View, Text, TouchableOpacity, Modal, StyleSheet } from "react-native";
-import { useEffect, useState } from "react";
+import { View, Text, TouchableOpacity, Modal, Platform, StyleSheet } from "react-native";
+import { useEffect, useRef, useState } from "react";
 import { VideoView, useVideoPlayer } from "expo-video";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
-// Served from public/video/ — copied to dist root by expo export.
-// The baseUrl /FitHer-Workout-App is set in experiments.baseUrl in app.config.ts.
-const VIDEO_SOURCE = "/FitHer-Workout-App/video/motivational.mp4";
+const VIDEO_URL = "/FitHer-Workout-App/video/motivational.mp4";
 
 interface Props {
   visible: boolean;
@@ -16,56 +14,117 @@ interface Props {
 export function MotivationVideoModal({ visible, onClose, onDontShowAgain }: Props) {
   const [muted, setMuted] = useState(true);
 
-  const player = useVideoPlayer(VIDEO_SOURCE, (p) => {
+  // Web: control via HTML video ref
+  const videoRef = useRef<any>(null);
+
+  // Native: expo-video player (null source on web to satisfy hook rules)
+  const player = useVideoPlayer(Platform.OS !== "web" ? VIDEO_URL : null, (p) => {
     p.loop = true;
-    p.muted = true;
+    p.muted = false;
+    p.play();
   });
 
+  // Web autoplay: start muted → autoplay succeeds → immediately unmute
   useEffect(() => {
-    if (visible) {
-      player.muted = true;
-      player.play();
+    if (Platform.OS !== "web") return;
+    if (!visible) {
+      if (videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.currentTime = 0;
+      }
       setMuted(true);
+      return;
+    }
+
+    const tryPlay = () => {
+      const vid = videoRef.current;
+      if (!vid) return;
+      vid.muted = true;
+      vid.play()
+        .then(() => {
+          // Video autoplayed — now unmute (this is NOT blocked by browser policy)
+          vid.muted = false;
+          setMuted(false);
+        })
+        .catch(() => {
+          // Fully blocked — stay muted, user can tap
+        });
+    };
+
+    // Short delay so the Modal has time to render the video element
+    const t = setTimeout(tryPlay, 80);
+    return () => clearTimeout(t);
+  }, [visible]);
+
+  // Native: play/pause with visibility
+  useEffect(() => {
+    if (Platform.OS === "web") return;
+    if (visible) {
+      player.muted = false;
+      player.play();
+      setMuted(false);
     } else {
       player.pause();
-      player.muted = true;
       setMuted(true);
     }
   }, [visible]);
 
   const toggleMute = () => {
     const next = !muted;
-    player.muted = next;
+    if (Platform.OS === "web" && videoRef.current) {
+      videoRef.current.muted = next;
+    } else {
+      player.muted = next;
+    }
     setMuted(next);
   };
 
   return (
-    <Modal
-      visible={visible}
-      animationType="fade"
-      statusBarTranslucent
-      transparent
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="fade" statusBarTranslucent transparent onRequestClose={onClose}>
       <View style={styles.overlay}>
-        {/* Full-screen video */}
-        <VideoView
-          player={player}
-          style={StyleSheet.absoluteFillObject}
-          contentFit="cover"
-          nativeControls={false}
-        />
 
-        {/* Dark overlay at bottom so text is readable */}
+        {/* Full-screen video */}
+        {Platform.OS === "web" ? (
+          <View style={StyleSheet.absoluteFillObject}>
+            {/* @ts-ignore - web-only HTML element */}
+            <video
+              ref={videoRef}
+              src={VIDEO_URL}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+              } as any}
+              loop
+              muted
+              playsInline
+              preload="auto"
+            />
+          </View>
+        ) : (
+          <VideoView
+            player={player}
+            style={StyleSheet.absoluteFillObject}
+            contentFit="cover"
+            nativeControls={false}
+          />
+        )}
+
+        {/* Dark gradient overlay at bottom */}
         <View style={styles.bottomOverlay} pointerEvents="none" />
 
-        {/* Sound toggle */}
-        <TouchableOpacity onPress={toggleMute} style={styles.muteBtn} activeOpacity={0.8}>
-          <MaterialIcons name={muted ? "volume-off" : "volume-up"} size={18} color="#fff" />
-          <Text style={styles.muteBtnText}>{muted ? "Tap for Sound" : "Sound On"}</Text>
-        </TouchableOpacity>
+        {/* Sound toggle — only show when muted */}
+        {muted && (
+          <TouchableOpacity onPress={toggleMute} style={styles.muteBtn} activeOpacity={0.8}>
+            <MaterialIcons name="volume-off" size={18} color="#fff" />
+            <Text style={styles.muteBtnText}>Tap for Sound</Text>
+          </TouchableOpacity>
+        )}
 
-        {/* Bottom CTA */}
+        {/* CTA */}
         <View style={styles.bottomArea}>
           <Text style={styles.headline}>YOU GOT THIS 💪</Text>
           <Text style={styles.subtitle}>Every rep brings you closer to your goal.</Text>
@@ -86,7 +145,7 @@ export function MotivationVideoModal({ visible, onClose, onDontShowAgain }: Prop
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "#111",
+    backgroundColor: "#000",
   },
   bottomOverlay: {
     position: "absolute",
@@ -102,7 +161,7 @@ const styles = StyleSheet.create({
     right: 20,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.55)",
     borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 7,
