@@ -22,13 +22,13 @@ export default function BMICalculatorScreen() {
 
   const initialHeight = state.profile?.height
     ? (unitSystem === "imperial"
-        ? String(Math.round(state.profile.height * 0.393701))
+        ? String(Math.round(state.profile.height * 0.393701 * 10) / 10)
         : String(state.profile.height))
     : "";
 
   const initialWeight = state.profile?.weight
     ? (unitSystem === "imperial"
-        ? String(Math.round(state.profile.weight * 2.20462))
+        ? String(Math.round(state.profile.weight * 2.20462 * 10) / 10)
         : String(state.profile.weight))
     : "";
 

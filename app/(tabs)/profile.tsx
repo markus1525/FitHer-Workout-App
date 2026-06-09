@@ -52,49 +52,71 @@ export default function ProfileScreen() {
 
   const handleToggleNotifications = async () => {
     if (Platform.OS === "web") {
-      if (typeof window !== "undefined" && "Notification" in window) {
-        if (Notification.permission === "granted") {
-          window.alert("To disable notifications, please update your browser site settings for this website.");
-          setNotificationsEnabled(true);
-        } else if (Notification.permission === "denied") {
-          window.alert("Notifications are blocked by your browser. Please enable them in your browser site settings.");
-          setNotificationsEnabled(false);
-        } else {
-          const permission = await Notification.requestPermission();
-          setNotificationsEnabled(permission === "granted");
-        }
+      if (typeof window === "undefined" || !("Notification" in window)) {
+        window.alert("Your browser does not support notifications.");
+        return;
+      }
+      if (Notification.permission === "granted") {
+        window.alert(
+          "Notifications are ON.\n\n" +
+          "To turn them off:\n" +
+          "• Chrome/Edge: click the lock icon in the address bar → Notifications → Block\n" +
+          "• Safari: Settings → Websites → Notifications → find this site → Deny\n" +
+          "• Firefox: click the lock icon → Connection Secure → More Information → Permissions"
+        );
+        setNotificationsEnabled(true);
+      } else if (Notification.permission === "denied") {
+        window.alert(
+          "Notifications are blocked by your browser.\n\n" +
+          "To enable them:\n" +
+          "• Chrome/Edge: click the lock icon in the address bar → Notifications → Allow\n" +
+          "• Safari: Settings → Websites → Notifications → find this site → Allow\n" +
+          "• Firefox: click the lock icon → Permissions → Notifications → Allow"
+        );
+        setNotificationsEnabled(false);
       } else {
-        window.alert("Notifications are not supported by this browser.");
+        const permission = await Notification.requestPermission();
+        setNotificationsEnabled(permission === "granted");
+        if (permission === "denied") {
+          window.alert("Notifications blocked. You can enable them in your browser's site settings.");
+        }
       }
       return;
     }
-    // Direct user to device app settings
+
+    // Native (Android / iOS)
     try {
-      if (Platform.OS === "android" || Platform.OS === "ios") {
-        const Notifications = require("expo-notifications");
-        const { status: existingStatus } = await Notifications.getPermissionsAsync();
-        let finalStatus = existingStatus;
-        if (existingStatus !== "granted") {
-          const { status } = await Notifications.requestPermissionsAsync();
-          finalStatus = status;
-        }
-        if (finalStatus === "granted") {
+      const Notifications = require("expo-notifications");
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      if (existingStatus === "granted") {
+        // Already granted — direct to settings to turn off
+        Alert.alert(
+          "Notifications are ON",
+          "To turn off notifications, go to your device Settings and disable them for FitHer.",
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Open Settings", onPress: () => Linking.openSettings() },
+          ]
+        );
+      } else {
+        // Request permission
+        const { status } = await Notifications.requestPermissionsAsync();
+        if (status === "granted") {
           setNotificationsEnabled(true);
         } else {
           setNotificationsEnabled(false);
           Alert.alert(
-            "Notifications Disabled",
-            "Please enable notifications in your device settings to receive daily reminders.",
+            "Enable Notifications",
+            "Notifications are disabled. Enable them in your device Settings to receive workout reminders.",
             [
               { text: "Cancel", style: "cancel" },
-              { text: "Settings", onPress: () => Linking.openSettings() }
+              { text: "Open Settings", onPress: () => Linking.openSettings() },
             ]
           );
         }
       }
     } catch (error) {
       console.log("Error handling notifications toggle", error);
-      Alert.alert("Error", "Unable to open device settings.");
     }
   };
 
@@ -112,23 +134,46 @@ export default function ProfileScreen() {
   }, []);
 
   const handleAddToHomeScreen = async () => {
-    if (Platform.OS === "web" && deferredPrompt) {
+    if (Platform.OS !== "web") {
+      Alert.alert("Already Installed", "You are already running FitHer as a native app!");
+      return;
+    }
+
+    if (deferredPrompt) {
+      // Android Chrome / desktop Chrome — native install prompt available
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === "accepted") {
-        setDeferredPrompt(null);
-      }
+      if (outcome === "accepted") setDeferredPrompt(null);
+      return;
+    }
+
+    // No native prompt — show manual instructions based on browser/OS
+    const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+    const isIOS = /iPad|iPhone|iPod/.test(ua);
+    const isAndroid = /Android/.test(ua);
+
+    if (isIOS) {
+      window.alert(
+        "Add FitHer to Home Screen (iOS Safari)\n\n" +
+        "1. Tap the Share button at the bottom of Safari (the box with an arrow pointing up).\n" +
+        "2. Scroll down and tap \"Add to Home Screen\".\n" +
+        "3. Tap \"Add\" in the top right corner.\n\n" +
+        "Note: This only works in Safari — not Chrome or other browsers on iOS."
+      );
+    } else if (isAndroid) {
+      window.alert(
+        "Add FitHer to Home Screen (Android)\n\n" +
+        "1. Tap the three-dot menu (⋮) in your browser.\n" +
+        "2. Tap \"Add to Home screen\" or \"Install app\".\n" +
+        "3. Confirm by tapping \"Add\"."
+      );
     } else {
-      if (Platform.OS === "web") {
-        window.alert(
-          "Install FitHer\n\nTo add FitHer to your home screen, tap your browser's menu button (such as the Share button in Safari on iOS, or the menu icon/three dots in Chrome) and select 'Add to Home Screen'."
-        );
-      } else {
-        Alert.alert(
-          "Already Installed",
-          "You are already running the app as a native application!"
-        );
-      }
+      window.alert(
+        "Install FitHer\n\n" +
+        "In Chrome: click the install icon (⊕) in the address bar, or open the menu (⋮) and select \"Install FitHer\".\n\n" +
+        "In Edge: click the install icon in the address bar.\n\n" +
+        "In Safari (Mac): use File → Add to Dock."
+      );
     }
   };
   const [name, setName] = useState(state.profile?.name || "");
@@ -203,11 +248,55 @@ export default function ProfileScreen() {
 
   const toggleUnit = async () => {
     const newUnit = unitSystem === "metric" ? "imperial" : "metric";
+
+    // If user is in edit mode, convert the currently typed height/weight values
+    if (editing) {
+      const h = parseFloat(height);
+      const w = parseFloat(weight);
+      if (!isNaN(h)) {
+        if (newUnit === "imperial") {
+          setHeight(String(Math.round(h * 0.393701 * 10) / 10)); // cm → in
+        } else {
+          setHeight(String(Math.round((h / 0.393701) * 10) / 10)); // in → cm
+        }
+      }
+      if (!isNaN(w)) {
+        if (newUnit === "imperial") {
+          setWeight(String(Math.round(w * 2.20462 * 10) / 10)); // kg → lbs
+        } else {
+          setWeight(String(Math.round((w / 2.20462) * 10) / 10)); // lbs → kg
+        }
+      }
+    }
+
     if (state.profile) {
       await updateProfile({
         ...state.profile,
         unitSystem: newUnit,
       });
+    }
+  };
+
+  const handleReset = () => {
+    const doReset = async () => {
+      await resetAllData();
+      router.replace("/onboarding");
+    };
+
+    if (Platform.OS === "web") {
+      const confirmed = window.confirm(
+        "Reset all data?\n\nThis will delete your profile, workout history, and all settings. You will go back to the welcome screen."
+      );
+      if (confirmed) doReset();
+    } else {
+      Alert.alert(
+        "Reset All Data",
+        "This will delete your profile, workout history, and all settings. You will go back to the welcome screen.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Reset", style: "destructive", onPress: doReset },
+        ]
+      );
     }
   };
 
@@ -610,12 +699,29 @@ export default function ProfileScreen() {
             <Text style={{ fontSize: 12, color: colors.muted }}>v1.0.0</Text>
           </TouchableOpacity>
           {showAboutInfo && (
-            <View style={{ padding: 16, paddingLeft: 48, paddingTop: 12, paddingBottom: 16 }}>
+            <View style={{ padding: 16, paddingLeft: 48, paddingTop: 12, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
               <Text style={{ fontSize: 12, color: colors.muted, lineHeight: 18 }}>
                 FitHer is a home workout app designed exclusively for women. It provides personalized workout plans, menstrual cycle tracking, BMI monitoring, and more to help you achieve your fitness goals.
               </Text>
             </View>
           )}
+
+          {/* Reset */}
+          <TouchableOpacity
+            onPress={handleReset}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              padding: 16,
+            }}
+            activeOpacity={0.7}
+          >
+            <MaterialIcons name="restart-alt" size={20} color="#F44336" />
+            <Text style={{ fontSize: 14, color: "#F44336", marginLeft: 12, flex: 1, fontWeight: "600" }}>
+              Reset All Data
+            </Text>
+            <MaterialIcons name="chevron-right" size={20} color="#F44336" />
+          </TouchableOpacity>
         </View>
 
         {/* Footer */}
