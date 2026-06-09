@@ -216,4 +216,44 @@ export async function clearAllData(): Promise<void> {
   }
 }
 
+export async function exportAppData(): Promise<string> {
+  const backup: Record<string, any> = {};
+  for (const [name, key] of Object.entries(KEYS)) {
+    const val = await AsyncStorage.getItem(key);
+    if (val !== null) {
+      try {
+        backup[key] = JSON.parse(val);
+      } catch {
+        backup[key] = val;
+      }
+    }
+  }
+  return JSON.stringify(backup, null, 2);
+}
+
+export async function importAppData(jsonStr: string): Promise<boolean> {
+  try {
+    const data = JSON.parse(jsonStr);
+    if (typeof data !== "object" || data === null) return false;
+    
+    const hasKeys = Object.values(KEYS).some((key) => key in data);
+    if (!hasKeys) return false;
+
+    for (const key of Object.values(KEYS)) {
+      if (key in data) {
+        const val = data[key];
+        if (typeof val === "string" && (val === "true" || val === "false")) {
+          await AsyncStorage.setItem(key, val);
+        } else {
+          await AsyncStorage.setItem(key, JSON.stringify(val));
+        }
+      }
+    }
+    return true;
+  } catch (e) {
+    console.error("Failed to import data:", e);
+    return false;
+  }
+}
+
 export { KEYS };

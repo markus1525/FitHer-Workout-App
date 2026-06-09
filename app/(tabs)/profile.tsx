@@ -9,10 +9,11 @@ import { useApp } from "@/lib/app-context";
 import { useColors } from "@/hooks/use-colors";
 import { useThemeContext } from "@/lib/theme-provider";
 import { cmToFtIn, ftInToCm, formatHeight } from "@/lib/utils";
+import { exportAppData, importAppData } from "@/lib/storage";
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { state, updateProfile, updateSchedule, resetAllData } = useApp();
+  const { state, updateProfile, updateSchedule, resetAllData, refreshData } = useApp();
   const colors = useColors();
   const { colorScheme, setColorScheme } = useThemeContext();
   const [editing, setEditing] = useState(false);
@@ -87,6 +88,9 @@ export default function ProfileScreen() {
   const [showAboutInfo, setShowAboutInfo] = useState(false);
   const [notifEnabled, setNotifEnabled] = useState(false);
   const [videoEnabled, setVideoEnabled] = useState(true);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importText, setImportText] = useState("");
+  const [importing, setImporting] = useState(false);
 
   useEffect(() => {
     const checkPerm = async () => {
@@ -297,6 +301,91 @@ export default function ProfileScreen() {
     const nextMode: "both" | "home" | "gym" =
       currentMode === "both" ? "home" : currentMode === "home" ? "gym" : "both";
     await updateProfile({ ...state.profile, workoutsMode: nextMode });
+  };
+
+  const handleExportData = async () => {
+    try {
+      const dataStr = await exportAppData();
+      if (Platform.OS === "web") {
+        const dataUri = "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
+        const exportFileDefaultName = `fither_backup_${new Date().toISOString().split("T")[0]}.json`;
+        const linkElement = document.createElement("a");
+        linkElement.setAttribute("href", dataUri);
+        linkElement.setAttribute("download", exportFileDefaultName);
+        linkElement.click();
+      } else {
+        const { Share } = require("react-native");
+        await Share.share({
+          message: dataStr,
+          title: "FitHer Backup Data",
+        });
+      }
+    } catch (error) {
+      console.error("Export error", error);
+      if (Platform.OS === "web") {
+        window.alert("Failed to export data. Please try again.");
+      } else {
+        Alert.alert("Export Failed", "Failed to export data. Please try again.");
+      }
+    }
+  };
+
+  const handleImportFile = () => {
+    if (typeof document === "undefined") return;
+    const inputElement = document.createElement("input");
+    inputElement.type = "file";
+    inputElement.accept = ".json";
+    inputElement.onchange = async (event: any) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (e: any) => {
+        const content = e.target.result;
+        const success = await importAppData(content);
+        if (success) {
+          await refreshData();
+          setShowImportModal(false);
+          window.alert("Data imported successfully! Your profile, history, and settings have been updated.");
+        } else {
+          window.alert("Failed to import data. Please verify that the file is a valid FitHer backup file.");
+        }
+      };
+      reader.readAsText(file);
+    };
+    inputElement.click();
+  };
+
+  const handleImportText = async () => {
+    if (!importText.trim()) return;
+    setImporting(true);
+    try {
+      const success = await importAppData(importText.trim());
+      if (success) {
+        await refreshData();
+        setImportText("");
+        setShowImportModal(false);
+        if (Platform.OS === "web") {
+          window.alert("Data imported successfully! Your profile, history, and settings have been updated.");
+        } else {
+          Alert.alert("Success", "Data imported successfully! Your profile, history, and settings have been updated.");
+        }
+      } else {
+        if (Platform.OS === "web") {
+          window.alert("Failed to import data. Please check that you pasted a valid FitHer backup JSON string.");
+        } else {
+          Alert.alert("Import Failed", "Please check that you pasted a valid FitHer backup JSON string.");
+        }
+      }
+    } catch (e) {
+      if (Platform.OS === "web") {
+        window.alert("Error importing data. Invalid format.");
+      } else {
+        Alert.alert("Import Error", "Invalid backup data format.");
+      }
+    } finally {
+      setImporting(false);
+    }
   };
 
   const handleReset = () => {
@@ -799,6 +888,44 @@ export default function ProfileScreen() {
             />
           </TouchableOpacity>
 
+          {/* Export Data */}
+          <TouchableOpacity
+            onPress={handleExportData}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              padding: 16,
+              borderBottomWidth: 1,
+              borderBottomColor: colors.border,
+            }}
+            activeOpacity={0.7}
+          >
+            <MaterialIcons name="cloud-download" size={20} color={colors.primary} />
+            <Text style={{ fontSize: 14, color: colors.foreground, marginLeft: 12, flex: 1 }}>
+              Export Backup Data
+            </Text>
+            <MaterialIcons name="chevron-right" size={20} color={colors.muted} />
+          </TouchableOpacity>
+
+          {/* Import Data */}
+          <TouchableOpacity
+            onPress={() => setShowImportModal(true)}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              padding: 16,
+              borderBottomWidth: 1,
+              borderBottomColor: colors.border,
+            }}
+            activeOpacity={0.7}
+          >
+            <MaterialIcons name="cloud-upload" size={20} color={colors.primary} />
+            <Text style={{ fontSize: 14, color: colors.foreground, marginLeft: 12, flex: 1 }}>
+              Import Backup Data
+            </Text>
+            <MaterialIcons name="chevron-right" size={20} color={colors.muted} />
+          </TouchableOpacity>
+
           {/* About */}
           <TouchableOpacity
             onPress={() => setShowAboutInfo(!showAboutInfo)}
@@ -846,6 +973,135 @@ export default function ProfileScreen() {
           <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>Your fitness journey, your way.</Text>
         </View>
       </ScrollView>
+
+      {/* Import Backup Modal */}
+      {showImportModal && (
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            backgroundColor: "rgba(0,0,0,0.7)",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 100,
+            padding: 20,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: colors.surface,
+              borderRadius: 20,
+              width: "100%",
+              maxWidth: 480,
+              padding: 24,
+              borderWidth: 1,
+              borderColor: colors.border,
+            }}
+          >
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <Text style={{ fontSize: 18, fontWeight: "700", color: colors.foreground }}>
+                Import Backup Data
+              </Text>
+              <TouchableOpacity onPress={() => { setShowImportModal(false); setImportText(""); }}>
+                <MaterialIcons name="close" size={24} color={colors.muted} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={{ fontSize: 13, color: colors.muted, lineHeight: 18, marginBottom: 16 }}>
+              Importing backup data will replace your current profile, history, and all app settings. This action cannot be undone.
+            </Text>
+
+            {Platform.OS === "web" && (
+              <TouchableOpacity
+                onPress={handleImportFile}
+                style={{
+                  backgroundColor: colors.primary + "15",
+                  borderWidth: 1,
+                  borderColor: colors.primary,
+                  borderRadius: 12,
+                  paddingVertical: 12,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexDirection: "row",
+                  marginBottom: 16,
+                }}
+                activeOpacity={0.7}
+              >
+                <MaterialIcons name="insert-drive-file" size={18} color={colors.primary} style={{ marginRight: 6 }} />
+                <Text style={{ color: colors.primary, fontWeight: "600", fontSize: 14 }}>
+                  Select Backup JSON File
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            {Platform.OS === "web" && (
+              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 16 }}>
+                <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
+                <Text style={{ marginHorizontal: 10, fontSize: 12, color: colors.muted }}>OR PASTE TEXT</Text>
+                <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
+              </View>
+            )}
+
+            <TextInput
+              value={importText}
+              onChangeText={setImportText}
+              placeholder="Paste your backup JSON string here..."
+              placeholderTextColor={colors.muted}
+              multiline
+              numberOfLines={6}
+              style={{
+                backgroundColor: colors.background,
+                borderWidth: 1,
+                borderColor: colors.border,
+                borderRadius: 12,
+                padding: 12,
+                fontSize: 13,
+                color: colors.foreground,
+                textAlignVertical: "top",
+                minHeight: 120,
+                marginBottom: 20,
+                fontFamily: Platform.OS === "web" ? "monospace" : undefined,
+              }}
+            />
+
+            <View style={{ flexDirection: "row", gap: 12 }}>
+              <TouchableOpacity
+                onPress={() => { setShowImportModal(false); setImportText(""); }}
+                style={{
+                  flex: 1,
+                  backgroundColor: colors.border,
+                  borderRadius: 12,
+                  paddingVertical: 12,
+                  alignItems: "center",
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={{ color: colors.foreground, fontWeight: "600" }}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleImportText}
+                disabled={importing || !importText.trim()}
+                style={{
+                  flex: 1,
+                  backgroundColor: colors.primary,
+                  borderRadius: 12,
+                  paddingVertical: 12,
+                  alignItems: "center",
+                  opacity: importText.trim() ? 1 : 0.5,
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={{ color: "#FFF", fontWeight: "600" }}>
+                  {importing ? "Importing..." : "Import Data"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
     </ScreenContainer>
   );
 }
