@@ -1,6 +1,7 @@
 import "@/global.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
+import Head from "expo-router/head";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -74,8 +75,23 @@ export default function RootLayout() {
     };
   }, [initialInsets, initialFrame]);
 
+  const ICON_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663523605261/3PvwNR8VybWQnjqXPU9foG/fither-icon-79aubkohDz4ENMLsKWHnyj.png";
+
   const content = (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      <Head>
+        <title>FitHer</title>
+        <meta name="description" content="Your personal home workout app designed for women." />
+        <meta name="theme-color" content="#E91E63" />
+        {/* PWA / Add to Home Screen */}
+        <meta name="application-name" content="FitHer" />
+        <meta name="apple-mobile-web-app-title" content="FitHer" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <link rel="apple-touch-icon" sizes="180x180" href={ICON_URL} />
+        <link rel="icon" type="image/png" sizes="192x192" href={ICON_URL} />
+        <link rel="icon" type="image/png" sizes="512x512" href={ICON_URL} />
+      </Head>
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
         <QueryClientProvider client={queryClient}>
           <AppProvider>

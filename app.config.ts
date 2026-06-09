@@ -83,6 +83,12 @@ const config: ExpoConfig = {
     bundler: "metro",
     output: "static",
     favicon: "./assets/images/favicon.png",
+    name: "FitHer",
+    shortName: "FitHer",
+    description: "Your personal home workout app designed for women.",
+    themeColor: "#E91E63",
+    backgroundColor: "#FFF0F5",
+    lang: "en",
   },
   plugins: [
     "expo-router",
