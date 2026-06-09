@@ -3,7 +3,9 @@ import { useEffect, useState } from "react";
 import { VideoView, useVideoPlayer } from "expo-video";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
-const VIDEO_SOURCE = require("../../assets/video/motivational.MOV");
+// Served from public/video/ — copied to dist root by expo export.
+// The baseUrl /FitHer-Workout-App is set in experiments.baseUrl in app.config.ts.
+const VIDEO_SOURCE = "/FitHer-Workout-App/video/motivational.mp4";
 
 interface Props {
   visible: boolean;
