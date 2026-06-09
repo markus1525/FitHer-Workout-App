@@ -165,7 +165,7 @@ export default function ProfileScreen() {
   return (
     <ScreenContainer className="px-4 pt-2">
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
-        <Text className="text-2xl font-bold text-foreground mb-4">Profile</Text>
+        <Text className="text-2xl font-bold mb-4" style={{ color: colors.foreground }}>Profile</Text>
 
         {/* Profile Card */}
         <View className="rounded-2xl p-5 mb-4 items-center" style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
@@ -210,8 +210,8 @@ export default function ProfileScreen() {
 
           {!editing ? (
             <>
-              <Text className="text-xl font-bold text-foreground">{state.profile?.name || "User"}</Text>
-              <Text className="text-sm text-muted mt-1">
+              <Text className="text-xl font-bold" style={{ color: colors.foreground }}>{state.profile?.name || "User"}</Text>
+              <Text className="text-sm mt-1" style={{ color: colors.muted }}>
                 {state.profile?.age || 0} yrs • {state.profile?.height || 0} cm • {state.profile?.weight || 0} kg
               </Text>
               <TouchableOpacity
