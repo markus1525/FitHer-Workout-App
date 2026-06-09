@@ -98,6 +98,7 @@ export function MotivationVideoModal({ visible, onClose, onDontShowAgain }: Prop
                 height: "100%",
                 objectFit: "cover",
               } as any}
+              autoPlay
               loop
               muted
               playsInline
