@@ -20,7 +20,7 @@ function YouTubeWebPlayer({ videoId }: { videoId: string }) {
       <iframe
         width={playerWidth}
         height={playerHeight}
-        src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`}
+        src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`}
         frameBorder="0"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
@@ -31,7 +31,7 @@ function YouTubeWebPlayer({ videoId }: { videoId: string }) {
 
   return (
     <WebView
-      source={{ uri: `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1` }}
+      source={{ uri: `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1` }}
       style={{ width: playerWidth, height: playerHeight, borderRadius: 12, overflow: "hidden" }}
       allowsFullscreenVideo
       mediaPlaybackRequiresUserAction={false}
