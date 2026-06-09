@@ -281,10 +281,17 @@ export default function HomeScreen() {
         <View style={{ marginBottom: 16 }}>
           <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginBottom: 12 }}>Suggested For You</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {DEFAULT_WORKOUT_PLANS.slice(0, 4).map((plan) => (
+            {DEFAULT_WORKOUT_PLANS.filter((plan) => {
+              const workoutsMode = state.profile?.workoutsMode || "both";
+              const planMode = plan.mode || "home";
+              if (workoutsMode === "both") return true;
+              return planMode === workoutsMode;
+            })
+            .slice(0, 4)
+            .map((plan) => (
               <TouchableOpacity
                 key={plan.id}
-                onPress={() => router.push({ pathname: "/workout-detail", params: { planId: plan.id } })}
+                onPress={() => router.push({ pathname: "/workout-detail" as any, params: { planId: plan.id, isCustom: "0" } })}
                 style={{
                   backgroundColor: colors.surface,
                   borderRadius: 16,

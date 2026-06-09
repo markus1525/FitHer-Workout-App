@@ -77,6 +77,7 @@ export default function OnboardingScreen() {
       fitnessGoal: goal || "stay_active",
       fitnessLevel: level || "beginner",
       unitSystem: unitSystem,
+      workoutsMode: "both",
     });
     await completeOnboarding();
 
