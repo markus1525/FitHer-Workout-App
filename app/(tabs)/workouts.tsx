@@ -62,8 +62,8 @@ export default function WorkoutsScreen() {
         }}
         activeOpacity={0.7}
       >
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-          <View style={{ flex: 1, paddingRight: isDefaultPlan ? 32 : 0 }}>
+        <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
+          <View style={{ flex: 1, paddingRight: 32 }}>
             <Text style={{ fontSize: 15, fontWeight: "700", color: colors.foreground }}>{item.name}</Text>
             <Text style={{ fontSize: 12, color: colors.muted, marginTop: 4 }} numberOfLines={2}>{item.description}</Text>
             <View style={{ flexDirection: "row", alignItems: "center", marginTop: 8, gap: 12 }}>
@@ -89,8 +89,18 @@ export default function WorkoutsScreen() {
               )}
             </View>
           </View>
-          <MaterialIcons name="chevron-right" size={24} color={colors.muted} />
         </View>
+
+        <MaterialIcons
+          name="chevron-right"
+          size={24}
+          color={colors.muted}
+          style={{
+            position: "absolute",
+            right: 12,
+            bottom: 12,
+          }}
+        />
 
         {isDefaultPlan && (
           <TouchableOpacity
