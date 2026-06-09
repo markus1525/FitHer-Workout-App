@@ -113,8 +113,24 @@ export function MotivationVideoModal({ visible, onClose, onDontShowAgain }: Prop
           />
         )}
 
-        {/* Dark gradient overlay at bottom */}
-        <View style={styles.bottomOverlay} pointerEvents="none" />
+        {/* Gradient overlay — CSS gradient on web, stepped Views on native */}
+        {Platform.OS === "web" ? (
+          <View
+            pointerEvents="none"
+            style={[
+              styles.gradientOverlay,
+              { backgroundImage: "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.95) 65%)" } as any,
+            ]}
+          />
+        ) : (
+          <View pointerEvents="none" style={styles.gradientOverlay}>
+            <View style={{ flex: 1, backgroundColor: "transparent" }} />
+            <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.2)" }} />
+            <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.45)" }} />
+            <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.7)" }} />
+            <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.9)" }} />
+          </View>
+        )}
 
         {/* Sound toggle — only show when muted */}
         {muted && (
@@ -147,13 +163,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#000",
   },
-  bottomOverlay: {
+  gradientOverlay: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    height: 360,
-    backgroundColor: "rgba(0,0,0,0.65)",
+    height: 500,
   },
   muteBtn: {
     position: "absolute",
