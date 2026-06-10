@@ -46,45 +46,40 @@ export function MotivationVideoModal({ visible, onClose, onDontShowAgain, startM
     return () => sub.remove();
   }, [player, startMuted]);
 
-  // Web autoplay handling: try to play with sound if permitted, fall back to muted if blocked.
+  // Web: shared play helper used by both onCanPlay and the visibility effect.
+  const webPlay = (vid: HTMLVideoElement) => {
+    vid.muted = startMuted;
+    setMuted(startMuted);
+    vid.play().catch(() => {
+      // Browser blocked unmuted autoplay — fall back to muted
+      vid.muted = true;
+      setMuted(true);
+      vid.play().catch(console.log);
+    });
+  };
+
+  // Web: fires when the video element is ready to play (first mount or src change).
+  // This is more reliable than a fixed setTimeout because it waits for the actual
+  // video metadata + buffer to be ready, not just the DOM element to exist.
+  const handleWebCanPlay = () => {
+    if (Platform.OS !== "web") return;
+    const vid = videoRef.current;
+    if (vid && visible) webPlay(vid);
+  };
+
+  // Web: when modal becomes visible and video is already loaded (readyState ≥ 3),
+  // onCanPlay won't fire again — play directly. When hidden, pause + reset.
   useEffect(() => {
     if (Platform.OS !== "web") return;
+    const vid = videoRef.current;
     if (!visible) {
-      if (videoRef.current) {
-        videoRef.current.pause();
-        videoRef.current.currentTime = 0;
-      }
+      if (vid) { vid.pause(); vid.currentTime = 0; }
       setMuted(true);
       return;
     }
-
-    const tryPlay = () => {
-      const vid = videoRef.current;
-      if (!vid) return;
-
-      if (startMuted) {
-        vid.muted = true;
-        setMuted(true);
-        vid.play().catch((err: any) => {
-          console.log("Muted autoplay failed:", err);
-        });
-      } else {
-        vid.muted = false;
-        setMuted(false);
-        vid.play()
-          .catch((err: any) => {
-            console.log("Autoplay with sound failed, falling back to muted:", err);
-            vid.muted = true;
-            setMuted(true);
-            vid.play().catch((err2: any) => {
-              console.log("Muted fallback play failed:", err2);
-            });
-          });
-      }
-    };
-
-    const t = setTimeout(tryPlay, 80);
-    return () => clearTimeout(t);
+    // readyState 3 = HAVE_FUTURE_DATA, 4 = HAVE_ENOUGH_DATA — already loaded
+    if (vid && vid.readyState >= 3) webPlay(vid);
+    // else: onCanPlay will fire once the video is ready
   }, [visible, startMuted]);
 
   // Native: play/pause based on visibility
@@ -140,11 +135,11 @@ export function MotivationVideoModal({ visible, onClose, onDontShowAgain, startM
                 height: "100%",
                 objectFit: "cover",
               } as any}
-              autoPlay
               loop
               muted
               playsInline
               preload="auto"
+              onCanPlay={handleWebCanPlay}
             />
           </View>
         ) : (
