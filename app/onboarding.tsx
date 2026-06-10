@@ -44,6 +44,22 @@ export default function OnboardingScreen() {
     );
   }
   const [videoStartMuted, setVideoStartMuted] = useState(false);
+
+  // Pre-cache video prefs so handleComplete can read them synchronously
+  // (needed to call setShowVideo(true) before any await, keeping the browser
+  //  user-gesture context alive for unmuted autoplay on web)
+  const videoPrefRef = useRef<{ enabled: boolean; count: number } | null>(null);
+  useEffect(() => {
+    AsyncStorage.multiGet(["fither_welcome_video_enabled", "fither_welcome_video_count"]).then(
+      ([[, enabled], [, count]]) => {
+        videoPrefRef.current = {
+          enabled: enabled !== "false",
+          count: parseInt(count || "0"),
+        };
+      }
+    );
+  }, []);
+
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
   // Metric uses heightCm; imperial uses heightFt + heightIn
@@ -78,19 +94,20 @@ export default function OnboardingScreen() {
       weightKg = isNaN(rawWeight) ? 60 : rawWeight;
     }
 
-    // Read video preference and play count BEFORE completeOnboarding().
-    // Marking the session here prevents index.tsx from also showing the video
-    // when onboardingDone flips to true (duplicate audio fix).
-    const videoEnabled = await AsyncStorage.getItem("fither_welcome_video_enabled");
-    if (videoEnabled !== "false") {
-      // Determine mute state: first and second play are with sound, rest are muted
-      const countStr = await AsyncStorage.getItem("fither_welcome_video_count");
-      const count = parseInt(countStr || "0");
-      setVideoStartMuted(count >= 2);
-      await AsyncStorage.setItem("fither_welcome_video_count", String(count + 1));
-      videoSession.markShown(); // claim the slot before onboardingDone flips
+    // Use pre-cached prefs so we can call setShowVideo synchronously
+    // before any await — this keeps the browser user-gesture context alive,
+    // which is required for unmuted video autoplay on web.
+    const prefs = videoPrefRef.current ?? { enabled: true, count: 0 };
+    const shouldShowVideo = prefs.enabled;
+
+    if (shouldShowVideo) {
+      setVideoStartMuted(prefs.count >= 2);
+      videoSession.markShown(); // claim slot before onboardingDone flips
+      setShowVideo(true); // ← synchronous, gesture context still valid here
     }
 
+    // Async work happens after the video modal is already showing
+    await AsyncStorage.setItem("fither_welcome_video_count", String(prefs.count + 1));
     await updateProfile({
       name: name.trim() || "Beautiful",
       age: parseInt(age) || 25,
@@ -103,9 +120,7 @@ export default function OnboardingScreen() {
     });
     await completeOnboarding();
 
-    if (videoEnabled !== "false") {
-      setShowVideo(true);
-    } else {
+    if (!shouldShowVideo) {
       router.replace("/(tabs)");
     }
   };
