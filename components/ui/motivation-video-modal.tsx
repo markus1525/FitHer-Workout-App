@@ -139,6 +139,8 @@ export function MotivationVideoModal({ visible, onClose, onDontShowAgain, startM
             style={StyleSheet.absoluteFillObject}
             contentFit="cover"
             nativeControls={false}
+            allowsFullscreen={false}
+            allowsPictureInPicture={false}
           />
         )}
 

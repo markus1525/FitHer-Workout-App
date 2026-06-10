@@ -29,26 +29,30 @@ function YouTubeWebPlayer({ videoId }: { videoId: string }) {
     );
   }
 
+  const REFERER = "https://www.youtube.com";
+  const userAgent = Platform.OS === "android"
+    ? "Mozilla/5.0 (Linux; Android 13; Pixel 7 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.207 Mobile Safari/537.36"
+    : "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1";
+
   return (
     <WebView
       source={{
-        uri: `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1&origin=https://www.youtube.com`,
+        uri: `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1&enablejsapi=1&origin=${REFERER}&widget_referrer=${REFERER}`,
         headers: {
-          Referer: "https://www.youtube.com",
+          Referer: REFERER,
+          "User-Agent": userAgent,
         },
       }}
       style={{ width: playerWidth, height: playerHeight, borderRadius: 12, overflow: "hidden", backgroundColor: "black" }}
       allowsFullscreenVideo
-      allowsInlineMediaPlayback={true}
+      allowsInlineMediaPlayback
       mediaPlaybackRequiresUserAction={false}
       javaScriptEnabled
       domStorageEnabled
       originWhitelist={["*"]}
-      userAgent={
-        Platform.OS === "android"
-          ? "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Mobile Safari/537.36"
-          : "Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Mobile/15E148 Safari/604.1"
-      }
+      setSupportMultipleWindows={false}
+      mixedContentMode="always"
+      userAgent={userAgent}
     />
   );
 }
