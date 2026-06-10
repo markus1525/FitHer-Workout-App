@@ -10,6 +10,7 @@ import { Platform, View, Text, TouchableOpacity, Linking } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import "@/lib/_core/nativewind-pressable";
 import { ThemeProvider } from "@/lib/theme-provider";
+import { useColors } from "@/hooks/use-colors";
 import {
   SafeAreaFrameContext,
   SafeAreaInsetsContext,
@@ -33,6 +34,15 @@ const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
 export const unstable_settings = {
   anchor: "(tabs)",
 };
+
+function ThemedRoot({ children }: { children: React.ReactNode }) {
+  const colors = useColors();
+  return (
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.background }}>
+      {children}
+    </GestureHandlerRootView>
+  );
+}
 
 export default function RootLayout() {
   const initialInsets = initialWindowMetrics?.insets ?? DEFAULT_WEB_INSETS;
@@ -111,7 +121,7 @@ export default function RootLayout() {
   const ICON_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663523605261/3PvwNR8VybWQnjqXPU9foG/fither-icon-79aubkohDz4ENMLsKWHnyj.png";
 
   const content = (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <ThemedRoot>
       {/* Offline banner */}
       {isOffline && (
         <View
@@ -181,7 +191,7 @@ export default function RootLayout() {
           </AppProvider>
         </QueryClientProvider>
       </trpc.Provider>
-    </GestureHandlerRootView>
+    </ThemedRoot>
   );
 
   const shouldOverrideSafeArea = Platform.OS === "web";
