@@ -41,6 +41,7 @@ const env = {
 const config: ExpoConfig = {
   name: env.appName,
   slug: env.appSlug,
+  owner: "markus003",
   version: "1.0.0",
   orientation: "portrait",
   icon: "./assets/images/icon.png",
@@ -131,6 +132,11 @@ const config: ExpoConfig = {
     typedRoutes: true,
     reactCompiler: true,
     baseUrl: "/FitHer-Workout-App",
+  },
+  extra: {
+    eas: {
+      projectId: "2ec35161-b8de-4ff8-8196-db0a87b98cef",
+    },
   },
 };
 
