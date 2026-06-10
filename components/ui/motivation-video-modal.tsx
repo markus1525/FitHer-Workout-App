@@ -37,7 +37,8 @@ export function MotivationVideoModal({ visible, onClose, onDontShowAgain, startM
   const player = useVideoPlayer(Platform.OS !== "web" ? LOCAL_VIDEO : null, (p) => {
     p.loop = true;
     p.muted = true;
-    p.play();
+    // Don't auto-play here — let the visibility effect handle it
+    // to avoid playing before VideoView is mounted
   });
 
   // Web autoplay handling: try to play with sound if permitted, fall back to muted if blocked.
@@ -85,12 +86,16 @@ export function MotivationVideoModal({ visible, onClose, onDontShowAgain, startM
   }, [visible, startMuted]);
 
   // Native: play/pause with visibility
+  // Delay play() by 400ms on first show to allow VideoView to fully mount
   useEffect(() => {
     if (Platform.OS === "web") return;
     if (visible) {
-      player.muted = startMuted;
-      player.play();
-      setMuted(startMuted);
+      const timer = setTimeout(() => {
+        player.muted = startMuted;
+        player.play();
+        setMuted(startMuted);
+      }, 400);
+      return () => clearTimeout(timer);
     } else {
       player.pause();
       setMuted(true);
