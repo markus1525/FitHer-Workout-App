@@ -1,20 +1,8 @@
 import { View, Text, TouchableOpacity, Modal, Platform, StyleSheet } from "react-native";
 import { useEffect, useRef, useState } from "react";
 import { VideoView, useVideoPlayer } from "expo-video";
+import { useEvent } from "expo";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-
-const getAssetUrl = (path: string) => {
-  if (Platform.OS !== "web") {
-    return path;
-  }
-  if (typeof window !== "undefined") {
-    const pathname = window.location.pathname;
-    if (pathname.includes("/FitHer-Workout-App")) {
-      return `/FitHer-Workout-App${path}`;
-    }
-  }
-  return path;
-};
 
 const VIDEO_URL = "https://markus1525.github.io/FitHer-Workout-App/video/motivational.mp4";
 const LOCAL_VIDEO = require("../../assets/video/motivational.mp4");
@@ -33,12 +21,28 @@ export function MotivationVideoModal({ visible, onClose, onDontShowAgain, startM
   // Web: control via HTML video ref
   const videoRef = useRef<any>(null);
 
+  // pendingPlay: true when visible=true but player isn't ready yet (native only)
+  const pendingPlay = useRef(false);
+
   // Native: expo-video player (null source on web to satisfy hook rules)
   const player = useVideoPlayer(Platform.OS !== "web" ? LOCAL_VIDEO : null, (p) => {
     p.loop = true;
     p.muted = true;
-    // Don't auto-play here — let the visibility effect handle it
-    // to avoid playing before VideoView is mounted
+  });
+
+  // Native: listen for player status changes
+  // When player becomes readyToPlay and we have a pending play request, start playback
+  useEvent(Platform.OS !== "web" ? player : (null as any), "statusChange", (payload: any) => {
+    if (Platform.OS === "web") return;
+    if (payload?.status === "readyToPlay" && pendingPlay.current) {
+      pendingPlay.current = false;
+      // Small delay so the VideoView surface has time to attach to the player
+      setTimeout(() => {
+        player.muted = startMuted;
+        player.play();
+        setMuted(startMuted);
+      }, 80);
+    }
   });
 
   // Web autoplay handling: try to play with sound if permitted, fall back to muted if blocked.
@@ -64,13 +68,11 @@ export function MotivationVideoModal({ visible, onClose, onDontShowAgain, startM
           console.log("Muted autoplay failed:", err);
         });
       } else {
-        // Try playing with sound directly (which is allowed if the user had a recent interaction)
         vid.muted = false;
         setMuted(false);
         vid.play()
           .catch((err: any) => {
             console.log("Autoplay with sound failed, falling back to muted:", err);
-            // Fall back to muted play, which is guaranteed to be allowed
             vid.muted = true;
             setMuted(true);
             vid.play().catch((err2: any) => {
@@ -80,23 +82,29 @@ export function MotivationVideoModal({ visible, onClose, onDontShowAgain, startM
       }
     };
 
-    // Short delay so the Modal has time to render the video element
     const t = setTimeout(tryPlay, 80);
     return () => clearTimeout(t);
   }, [visible, startMuted]);
 
-  // Native: play/pause with visibility
-  // Delay play() by 400ms on first show to allow VideoView to fully mount
+  // Native: play/pause based on visibility
+  // If already readyToPlay → play immediately (with small surface-attach delay)
+  // If still loading → set pendingPlay so statusChange handler triggers play later
   useEffect(() => {
     if (Platform.OS === "web") return;
     if (visible) {
-      const timer = setTimeout(() => {
-        player.muted = startMuted;
-        player.play();
-        setMuted(startMuted);
-      }, 400);
-      return () => clearTimeout(timer);
+      if (player.status === "readyToPlay") {
+        pendingPlay.current = false;
+        setTimeout(() => {
+          player.muted = startMuted;
+          player.play();
+          setMuted(startMuted);
+        }, 80);
+      } else {
+        // Player not ready yet — statusChange handler will start playback
+        pendingPlay.current = true;
+      }
     } else {
+      pendingPlay.current = false;
       player.pause();
       setMuted(true);
     }

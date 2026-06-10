@@ -43,7 +43,7 @@ const config: ExpoConfig = {
   slug: env.appSlug,
   owner: "markus003",
   version: "1.0.0",
-  orientation: "portrait",
+  orientation: "default",
   icon: "./assets/images/icon.png",
   scheme: env.scheme,
   userInterfaceStyle: "automatic",

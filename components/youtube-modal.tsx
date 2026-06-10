@@ -1,5 +1,4 @@
-import { Modal, View, TouchableOpacity, Text, Platform, Dimensions } from "react-native";
-import { WebView } from "react-native-webview";
+import { Modal, View, TouchableOpacity, Text, Platform, Linking, Dimensions, StyleSheet } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useColors } from "@/hooks/use-colors";
 
@@ -10,116 +9,186 @@ interface YouTubeModalProps {
   onClose: () => void;
 }
 
-function YouTubeWebPlayer({ videoId }: { videoId: string }) {
-  const { width } = Dimensions.get("window");
-  const playerWidth = Math.min(width - 32, 560);
-  const playerHeight = Math.round(playerWidth * 9 / 16);
+function openInYouTube(videoId: string) {
+  const appUrl = `youtube://watch?v=${videoId}`;
+  const webUrl = `https://www.youtube.com/watch?v=${videoId}`;
 
   if (Platform.OS === "web") {
-    return (
-      <iframe
-        width={playerWidth}
-        height={playerHeight}
-        src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`}
-        frameBorder="0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-        style={{ borderRadius: 12 }}
-      />
-    );
+    window.open(webUrl, "_blank");
+    return;
   }
 
-  const REFERER = "https://www.youtube.com";
-  const userAgent = Platform.OS === "android"
-    ? "Mozilla/5.0 (Linux; Android 13; Pixel 7 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.207 Mobile Safari/537.36"
-    : "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1";
-
-  return (
-    <WebView
-      source={{
-        uri: `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1&enablejsapi=1&origin=${REFERER}&widget_referrer=${REFERER}`,
-        headers: {
-          Referer: REFERER,
-          "User-Agent": userAgent,
-        },
-      }}
-      style={{ width: playerWidth, height: playerHeight, borderRadius: 12, overflow: "hidden", backgroundColor: "black" }}
-      allowsFullscreenVideo
-      allowsInlineMediaPlayback
-      mediaPlaybackRequiresUserAction={false}
-      javaScriptEnabled
-      domStorageEnabled
-      originWhitelist={["*"]}
-      setSupportMultipleWindows={false}
-      mixedContentMode="always"
-      userAgent={userAgent}
-    />
-  );
+  Linking.canOpenURL(appUrl)
+    .then((supported) => {
+      if (supported) return Linking.openURL(appUrl);
+      return Linking.openURL(webUrl);
+    })
+    .catch(() => Linking.openURL(webUrl));
 }
 
 export function YouTubeModal({ visible, videoId, title, onClose }: YouTubeModalProps) {
   const colors = useColors();
+  const { width } = Dimensions.get("window");
+  const thumbWidth = Math.min(width - 48, 480);
+  const thumbHeight = Math.round(thumbWidth * 9 / 16);
 
-  return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-      statusBarTranslucent
-    >
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: "rgba(0,0,0,0.85)",
-          justifyContent: "center",
-          alignItems: "center",
-          padding: 16,
-        }}
-      >
-        {/* Close Button */}
-        <TouchableOpacity
-          onPress={onClose}
-          style={{
-            position: "absolute",
-            top: 60,
-            right: 20,
-            width: 36,
-            height: 36,
-            borderRadius: 18,
-            backgroundColor: "rgba(255,255,255,0.15)",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 10,
-          }}
-          activeOpacity={0.7}
-        >
-          <MaterialIcons name="close" size={24} color="#FFF" />
-        </TouchableOpacity>
-
-        {/* Video Title */}
-        {title && (
-          <View style={{ marginBottom: 12, paddingHorizontal: 16, width: "100%" }}>
-            <Text style={{ color: "#FFF", fontSize: 16, fontWeight: "600", textAlign: "center" }} numberOfLines={2}>
-              {title}
-            </Text>
+  // Web: use iframe embed (not affected by Error 152-4)
+  if (Platform.OS === "web") {
+    return (
+      <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+        <View style={styles.backdrop}>
+          <TouchableOpacity style={StyleSheet.absoluteFillObject} onPress={onClose} activeOpacity={1} />
+          <View style={[styles.card, { backgroundColor: colors.card, width: thumbWidth + 48 }]}>
+            <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
+              <MaterialIcons name="close" size={22} color={colors.foreground} />
+            </TouchableOpacity>
+            {title && (
+              <Text style={[styles.title, { color: colors.foreground, marginBottom: 12, alignSelf: "flex-start" }]} numberOfLines={2}>
+                {title}
+              </Text>
+            )}
+            {/* @ts-ignore web iframe */}
+            <iframe
+              width={thumbWidth}
+              height={thumbHeight}
+              src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`}
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              style={{ borderRadius: 12, display: "block" }}
+            />
           </View>
-        )}
-
-        {/* Video Player */}
-        <View style={{ borderRadius: 12, overflow: "hidden" }}>
-          <YouTubeWebPlayer videoId={videoId} />
         </View>
+      </Modal>
+    );
+  }
 
-        {/* Tap outside to close hint */}
-        <TouchableOpacity
-          onPress={onClose}
-          style={{ marginTop: 20 }}
-          activeOpacity={0.7}
-        >
-          <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 13 }}>Tap to close</Text>
-        </TouchableOpacity>
+  // Native: branded card that opens in YouTube app / browser
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
+      <View style={styles.backdrop}>
+        <TouchableOpacity style={StyleSheet.absoluteFillObject} onPress={onClose} activeOpacity={1} />
+
+        <View style={[styles.card, { backgroundColor: colors.card, width: thumbWidth + 48 }]}>
+          {/* Header row */}
+          <View style={styles.header}>
+            <Text style={[styles.title, { color: colors.foreground }]} numberOfLines={2}>
+              {title ?? "Watch Video"}
+            </Text>
+            <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
+              <MaterialIcons name="close" size={22} color={colors.foreground} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Thumbnail placeholder */}
+          <View style={[styles.thumbContainer, { width: thumbWidth, height: thumbHeight }]}>
+            <MaterialIcons name="play-circle-filled" size={72} color="rgba(255,255,255,0.9)" />
+            <View style={styles.ytBadge}>
+              <MaterialIcons name="smart-display" size={16} color="#FF0000" />
+              <Text style={styles.ytBadgeText}>YouTube</Text>
+            </View>
+          </View>
+
+          {/* Open button */}
+          <TouchableOpacity
+            onPress={() => { openInYouTube(videoId); onClose(); }}
+            style={styles.openBtn}
+            activeOpacity={0.85}
+          >
+            <MaterialIcons name="open-in-new" size={18} color="#FFF" />
+            <Text style={styles.openBtnText}>Open in YouTube</Text>
+          </TouchableOpacity>
+
+          <Text style={styles.hint}>Opens in the YouTube app or browser</Text>
+        </View>
       </View>
     </Modal>
   );
 }
+
+const styles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.75)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 16,
+  },
+  card: {
+    borderRadius: 20,
+    padding: 20,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: 14,
+    width: "100%",
+    gap: 8,
+  },
+  closeBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(128,128,128,0.15)",
+    flexShrink: 0,
+  },
+  title: {
+    fontSize: 15,
+    fontWeight: "700",
+    lineHeight: 21,
+    flex: 1,
+  },
+  thumbContainer: {
+    borderRadius: 12,
+    backgroundColor: "#111",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  ytBadge: {
+    position: "absolute",
+    bottom: 10,
+    left: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.7)",
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    gap: 4,
+  },
+  ytBadgeText: {
+    color: "#FFF",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  openBtn: {
+    backgroundColor: "#FF0000",
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    width: "100%",
+    justifyContent: "center",
+    marginBottom: 10,
+  },
+  openBtnText: {
+    color: "#FFF",
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  hint: {
+    color: "rgba(128,128,128,0.75)",
+    fontSize: 12,
+  },
+});

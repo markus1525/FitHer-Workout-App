@@ -1,5 +1,6 @@
-import { ScrollView, Text, View, TouchableOpacity, TextInput, Alert, Platform, Image, Linking, Switch } from "react-native";
-import { useState, useEffect } from "react";
+import { ScrollView, Text, View, TouchableOpacity, TextInput, Platform, Image, Linking, Switch } from "react-native";
+import { useState, useEffect, useCallback } from "react";
+import { AppDialog, DialogButton } from "@/components/ui/app-dialog";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -19,6 +20,19 @@ export default function ProfileScreen() {
   const [editing, setEditing] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
+  // Custom dialog state (replaces Alert.alert on native)
+  const [dialog, setDialog] = useState<{
+    title: string;
+    message?: string;
+    buttons: DialogButton[];
+  } | null>(null);
+
+  const showDialog = useCallback((title: string, message: string | undefined, buttons: DialogButton[]) => {
+    setDialog({ title, message, buttons });
+  }, []);
+
+  const dismissDialog = useCallback(() => setDialog(null), []);
+
   const unitSystem = state.profile?.unitSystem || "metric";
   const workoutsMode = state.profile?.workoutsMode || "both";
 
@@ -37,7 +51,9 @@ export default function ProfileScreen() {
 
   const handleAddToHomeScreen = async () => {
     if (Platform.OS !== "web") {
-      Alert.alert("Already Installed", "You are already running FitHer as a native app!");
+      showDialog("Already Installed", "You are already running FitHer as a native app!", [
+        { label: "OK", onPress: dismissDialog },
+      ]);
       return;
     }
 
@@ -164,13 +180,12 @@ export default function ProfileScreen() {
       const Notifications = require("expo-notifications");
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
       if (existingStatus === "granted") {
-        // Already granted — direct to settings to turn off
-        Alert.alert(
+        showDialog(
           "Notifications are ON",
           "To turn off notifications, go to your device Settings and disable them for FitHer.",
           [
-            { text: "Cancel", style: "cancel" },
-            { text: "Open Settings", onPress: () => Linking.openSettings() },
+            { label: "Cancel", style: "cancel", onPress: dismissDialog },
+            { label: "Open Settings", onPress: () => { dismissDialog(); Linking.openSettings(); } },
           ]
         );
       } else {
@@ -180,12 +195,12 @@ export default function ProfileScreen() {
         setNotifEnabled(isGranted);
         await AsyncStorage.setItem("fither_notifications_enabled", isGranted ? "true" : "false");
         if (!isGranted) {
-          Alert.alert(
+          showDialog(
             "Enable Notifications",
             "Notifications are disabled. Enable them in your device Settings to receive workout reminders.",
             [
-              { text: "Cancel", style: "cancel" },
-              { text: "Open Settings", onPress: () => Linking.openSettings() },
+              { label: "Cancel", style: "cancel", onPress: dismissDialog },
+              { label: "Open Settings", onPress: () => { dismissDialog(); Linking.openSettings(); } },
             ]
           );
         }
@@ -262,7 +277,9 @@ export default function ProfileScreen() {
       }
     } catch (error) {
       if (Platform.OS !== "web") {
-        Alert.alert("Error", "Failed to pick image. Please try again.");
+        showDialog("Error", "Failed to pick image. Please try again.", [
+          { label: "OK", onPress: dismissDialog },
+        ]);
       }
     }
   };
@@ -330,7 +347,9 @@ export default function ProfileScreen() {
       if (Platform.OS === "web") {
         window.alert("Failed to export data. Please try again.");
       } else {
-        Alert.alert("Export Failed", "Failed to export data. Please try again.");
+        showDialog("Export Failed", "Failed to export data. Please try again.", [
+          { label: "OK", onPress: dismissDialog },
+        ]);
       }
     }
   };
@@ -373,20 +392,26 @@ export default function ProfileScreen() {
         if (Platform.OS === "web") {
           window.alert("Data imported successfully! Your profile, history, and settings have been updated.");
         } else {
-          Alert.alert("Success", "Data imported successfully! Your profile, history, and settings have been updated.");
+          showDialog("Import Successful", "Your profile, history, and settings have been updated.", [
+            { label: "OK", onPress: dismissDialog },
+          ]);
         }
       } else {
         if (Platform.OS === "web") {
           window.alert("Failed to import data. Please check that you pasted a valid FitHer backup JSON string.");
         } else {
-          Alert.alert("Import Failed", "Please check that you pasted a valid FitHer backup JSON string.");
+          showDialog("Import Failed", "Please check that you pasted a valid FitHer backup JSON string.", [
+            { label: "OK", onPress: dismissDialog },
+          ]);
         }
       }
     } catch (e) {
       if (Platform.OS === "web") {
         window.alert("Error importing data. Invalid format.");
       } else {
-        Alert.alert("Import Error", "Invalid backup data format.");
+        showDialog("Import Error", "Invalid backup data format.", [
+          { label: "OK", onPress: dismissDialog },
+        ]);
       }
     } finally {
       setImporting(false);
@@ -405,18 +430,26 @@ export default function ProfileScreen() {
       );
       if (confirmed) doReset();
     } else {
-      Alert.alert(
+      showDialog(
         "Reset All Data",
         "This will delete your profile, workout history, and all settings. You will go back to the welcome screen.",
         [
-          { text: "Cancel", style: "cancel" },
-          { text: "Reset", style: "destructive", onPress: doReset },
+          { label: "Cancel", style: "cancel", onPress: dismissDialog },
+          { label: "Reset", style: "destructive", onPress: () => { dismissDialog(); doReset(); } },
         ]
       );
     }
   };
 
   return (
+    <>
+      <AppDialog
+        visible={dialog !== null}
+        title={dialog?.title ?? ""}
+        message={dialog?.message}
+        buttons={dialog?.buttons ?? []}
+        onDismiss={dismissDialog}
+      />
     <ScreenContainer className="px-4 pt-2">
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
         <Text className="text-2xl font-bold mb-4" style={{ color: colors.foreground }}>Profile</Text>
@@ -1133,5 +1166,6 @@ export default function ProfileScreen() {
         </View>
       )}
     </ScreenContainer>
+    </>
   );
 }
