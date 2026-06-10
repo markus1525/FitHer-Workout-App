@@ -54,6 +54,7 @@ export default function OnboardingScreen() {
   const [goal, setGoal] = useState("");
   const [level, setLevel] = useState("");
   const [unitSystem, setUnitSystem] = useState<"metric" | "imperial">("metric");
+  const [workoutsMode, setWorkoutsMode] = useState<"home" | "gym" | "both">("both");
 
   const handleComplete = async () => {
     const rawWeight = parseFloat(weight);
@@ -91,7 +92,7 @@ export default function OnboardingScreen() {
       fitnessGoal: goal || "stay_active",
       fitnessLevel: level || "beginner",
       unitSystem: unitSystem,
-      workoutsMode: "both",
+      workoutsMode: workoutsMode,
     });
     await completeOnboarding();
 
@@ -113,6 +114,7 @@ export default function OnboardingScreen() {
         return age.length > 0 && heightOk && weight.length > 0;
       case 3: return goal.length > 0;
       case 4: return level.length > 0;
+      case 5: return workoutsMode.length > 0;
       default: return true;
     }
   };
@@ -139,7 +141,7 @@ export default function OnboardingScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
         {/* Progress */}
         <View style={{ flexDirection: "row", gap: 6, marginTop: 16, marginBottom: 32 }}>
-          {[0, 1, 2, 3, 4].map((i) => (
+          {[0, 1, 2, 3, 4, 5].map((i) => (
             <View
               key={i}
               style={{
@@ -461,6 +463,47 @@ export default function OnboardingScreen() {
           </View>
         )}
 
+        {/* Step 5: Workouts Mode */}
+        {step === 5 && (
+          <View style={{ flex: 1, justifyContent: "center" }}>
+            <Text style={{ fontSize: 24, fontWeight: "700", color: colors.foreground, marginBottom: 8 }}>
+              Where do you want to work out?
+            </Text>
+            <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 24 }}>
+              Choose your workouts environment. You can change this anytime in settings.
+            </Text>
+            <View style={{ gap: 12 }}>
+              {[
+                { id: "home", label: "Home Workouts Only", icon: "🏠", desc: "No-equipment & light dumbbell exercises" },
+                { id: "gym", label: "Gym Workouts Only", icon: "🏋️‍♀️", desc: "Machine & heavy equipment workouts" },
+                { id: "both", label: "Both (Home & Gym)", icon: "🔄", desc: "Access to all plans and equipment" }
+              ].map((m) => (
+                <TouchableOpacity
+                  key={m.id}
+                  onPress={() => setWorkoutsMode(m.id as "home" | "gym" | "both")}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    padding: 16,
+                    borderRadius: 16,
+                    borderWidth: 1,
+                    borderColor: workoutsMode === m.id ? colors.primary : colors.border,
+                    backgroundColor: workoutsMode === m.id ? colors.primary + "10" : "transparent",
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={{ fontSize: 24, marginRight: 12 }}>{m.icon}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground }}>{m.label}</Text>
+                    <Text style={{ fontSize: 12, color: colors.muted }}>{m.desc}</Text>
+                  </View>
+                  {workoutsMode === m.id && <MaterialIcons name="check-circle" size={24} color={colors.primary} />}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
         {/* Navigation Buttons */}
         <View style={{ flexDirection: "row", gap: 12, marginTop: 32, marginBottom: 24 }}>
           {step > 0 && (
@@ -482,7 +525,7 @@ export default function OnboardingScreen() {
           )}
           <TouchableOpacity
             onPress={() => {
-              if (step === 4) {
+              if (step === 5) {
                 handleComplete();
               } else {
                 setStep(step + 1);
@@ -500,7 +543,7 @@ export default function OnboardingScreen() {
             disabled={!canProceed()}
           >
             <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16 }}>
-              {step === 0 ? "Get Started" : step === 4 ? "Complete" : "Next"}
+              {step === 0 ? "Get Started" : step === 5 ? "Complete" : "Next"}
             </Text>
           </TouchableOpacity>
         </View>
