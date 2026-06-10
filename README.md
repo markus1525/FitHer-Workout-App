@@ -6,7 +6,7 @@
 
 **Your personal home workout app designed for women**
 
-[![Live App](https://img.shields.io/badge/Live%20App-FitHer-E91E63?style=for-the-badge&logo=googlechrome&logoColor=white)](https://minthukyawkhaung.github.io/FitHer-Workout-App)
+[![Live App](https://img.shields.io/badge/Live%20App-FitHer-E91E63?style=for-the-badge&logo=googlechrome&logoColor=white)](https://markus1525.github.io/FitHer-Workout-App/)
 [![Discord](https://img.shields.io/badge/Community-Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/dWPwCy4GEG)
 [![License](https://img.shields.io/badge/License-MIT-pink?style=for-the-badge)](LICENSE)
 
@@ -39,13 +39,13 @@ The app runs as a Progressive Web App (PWA), so you can install it on your phone
 ## Install on Your Phone
 
 **iPhone (iOS):**
-1. Open [FitHer](https://minthukyawkhaung.github.io/FitHer-Workout-App) in Safari
+1. Open [FitHer](https://markus1525.github.io/FitHer-Workout-App/) in Safari
 2. Tap the Share button at the bottom
 3. Tap **Add to Home Screen**
 4. Tap **Add**
 
 **Android:**
-1. Open [FitHer](https://minthukyawkhaung.github.io/FitHer-Workout-App) in Chrome
+1. Open [FitHer](https://markus1525.github.io/FitHer-Workout-App/) in Chrome
 2. Tap the three-dot menu at the top right
 3. Tap **Add to Home Screen** or **Install App**
 4. Tap **Install**
