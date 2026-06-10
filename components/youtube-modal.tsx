@@ -31,11 +31,18 @@ function YouTubeWebPlayer({ videoId }: { videoId: string }) {
 
   return (
     <WebView
-      source={{ uri: `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1` }}
-      style={{ width: playerWidth, height: playerHeight, borderRadius: 12, overflow: "hidden" }}
+      source={{
+        uri: `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`,
+        headers: {
+          Referer: "https://www.youtube.com",
+        },
+      }}
+      style={{ width: playerWidth, height: playerHeight, borderRadius: 12, overflow: "hidden", backgroundColor: "black" }}
       allowsFullscreenVideo
       mediaPlaybackRequiresUserAction={false}
       javaScriptEnabled
+      domStorageEnabled
+      originWhitelist={["*"]}
     />
   );
 }

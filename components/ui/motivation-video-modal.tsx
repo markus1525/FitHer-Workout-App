@@ -16,7 +16,7 @@ const getAssetUrl = (path: string) => {
   return path;
 };
 
-const VIDEO_URL = getAssetUrl("/video/motivational.mp4");
+const VIDEO_URL = "https://markus1525.github.io/FitHer-Workout-App/video/motivational.mp4";
 
 interface Props {
   visible: boolean;

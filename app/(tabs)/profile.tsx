@@ -741,39 +741,41 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* Install FitHer */}
-        <View
-          style={{
-            backgroundColor: colors.surface,
-            borderRadius: 16,
-            padding: 16,
-            marginBottom: 16,
-            borderWidth: 1,
-            borderColor: colors.border,
-          }}
-        >
-          <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 6 }}>
-            Install FitHer
-          </Text>
-          <Text style={{ fontSize: 12, color: colors.muted, lineHeight: 18, marginBottom: 14 }}>
-            Add FitHer to your home screen to use it like a normal app, full screen and offline. Data won't lose.
-          </Text>
-          <TouchableOpacity
-            onPress={handleAddToHomeScreen}
+        {/* Install FitHer (Web only) */}
+        {Platform.OS === "web" && (
+          <View
             style={{
-              backgroundColor: colors.primary,
-              borderRadius: 12,
-              paddingVertical: 12,
-              alignItems: "center",
-              justifyContent: "center",
+              backgroundColor: colors.surface,
+              borderRadius: 16,
+              padding: 16,
+              marginBottom: 16,
+              borderWidth: 1,
+              borderColor: colors.border,
             }}
-            activeOpacity={0.8}
           >
-            <Text style={{ color: "#FFF", fontWeight: "600", fontSize: 14 }}>
-              Add to home screen
+            <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 6 }}>
+              Install FitHer
             </Text>
-          </TouchableOpacity>
-        </View>
+            <Text style={{ fontSize: 12, color: colors.muted, lineHeight: 18, marginBottom: 14 }}>
+              Add FitHer to your home screen to use it like a normal app, full screen and offline. Data won't lose.
+            </Text>
+            <TouchableOpacity
+              onPress={handleAddToHomeScreen}
+              style={{
+                backgroundColor: colors.primary,
+                borderRadius: 12,
+                paddingVertical: 12,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              activeOpacity={0.8}
+            >
+              <Text style={{ color: "#FFF", fontWeight: "600", fontSize: 14 }}>
+                Add to home screen
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Join Discord */}
         <TouchableOpacity
