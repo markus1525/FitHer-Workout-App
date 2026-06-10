@@ -1,5 +1,5 @@
 import { Text, View, TouchableOpacity, TextInput, ScrollView, Linking } from "react-native";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -55,6 +55,13 @@ export default function OnboardingScreen() {
   const [level, setLevel] = useState("");
   const [unitSystem, setUnitSystem] = useState<"metric" | "imperial">("metric");
   const [workoutsMode, setWorkoutsMode] = useState<"home" | "gym" | "both">("both");
+
+  const nameInputRef = useRef<TextInput>(null);
+  const ageInputRef = useRef<TextInput>(null);
+  const heightCmInputRef = useRef<TextInput>(null);
+  const heightFtInputRef = useRef<TextInput>(null);
+  const heightInInputRef = useRef<TextInput>(null);
+  const weightInputRef = useRef<TextInput>(null);
 
   const handleComplete = async () => {
     const rawWeight = parseFloat(weight);
@@ -197,6 +204,7 @@ export default function OnboardingScreen() {
               We'll use this to personalize your experience.
             </Text>
             <TextInput
+              ref={nameInputRef}
               value={name}
               onChangeText={setName}
               placeholder="Enter your name"
@@ -214,7 +222,10 @@ export default function OnboardingScreen() {
                 textAlignVertical: "center",
               }}
               autoFocus
-              returnKeyType="done"
+              returnKeyType="next"
+              onSubmitEditing={() => {
+                if (canProceed()) setStep(2);
+              }}
             />
           </View>
         )}
@@ -267,6 +278,7 @@ export default function OnboardingScreen() {
               <View>
                 <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 6 }}>Age</Text>
                 <TextInput
+                  ref={ageInputRef}
                   value={age}
                   onChangeText={setAge}
                   placeholder="25"
@@ -284,7 +296,15 @@ export default function OnboardingScreen() {
                     textAlign: "left",
                     textAlignVertical: "center",
                   }}
-                  returnKeyType="done"
+                  returnKeyType="next"
+                  onSubmitEditing={() => {
+                    if (unitSystem === "imperial") {
+                      heightFtInputRef.current?.focus();
+                    } else {
+                      heightCmInputRef.current?.focus();
+                    }
+                  }}
+                  blurOnSubmit={false}
                 />
               </View>
               {unitSystem === "imperial" ? (
@@ -292,6 +312,7 @@ export default function OnboardingScreen() {
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 6 }}>Feet</Text>
                     <TextInput
+                      ref={heightFtInputRef}
                       value={heightFt}
                       onChangeText={setHeightFt}
                       placeholder="5"
@@ -309,12 +330,15 @@ export default function OnboardingScreen() {
                         textAlign: "center",
                         textAlignVertical: "center",
                       }}
-                      returnKeyType="done"
+                      returnKeyType="next"
+                      onSubmitEditing={() => heightInInputRef.current?.focus()}
+                      blurOnSubmit={false}
                     />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 6 }}>Inches</Text>
                     <TextInput
+                      ref={heightInInputRef}
                       value={heightIn}
                       onChangeText={setHeightIn}
                       placeholder="8"
@@ -332,7 +356,9 @@ export default function OnboardingScreen() {
                         textAlign: "center",
                         textAlignVertical: "center",
                       }}
-                      returnKeyType="done"
+                      returnKeyType="next"
+                      onSubmitEditing={() => weightInputRef.current?.focus()}
+                      blurOnSubmit={false}
                     />
                   </View>
                 </View>
@@ -340,6 +366,7 @@ export default function OnboardingScreen() {
                 <View>
                   <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 6 }}>Height (cm)</Text>
                   <TextInput
+                    ref={heightCmInputRef}
                     value={heightCm}
                     onChangeText={setHeightCm}
                     placeholder="165"
@@ -357,7 +384,9 @@ export default function OnboardingScreen() {
                       textAlign: "left",
                       textAlignVertical: "center",
                     }}
-                    returnKeyType="done"
+                    returnKeyType="next"
+                    onSubmitEditing={() => weightInputRef.current?.focus()}
+                    blurOnSubmit={false}
                   />
                 </View>
               )}
@@ -366,6 +395,7 @@ export default function OnboardingScreen() {
                   Weight ({unitSystem === "imperial" ? "lbs" : "kg"})
                 </Text>
                 <TextInput
+                  ref={weightInputRef}
                   value={weight}
                   onChangeText={setWeight}
                   placeholder={unitSystem === "imperial" ? "132" : "60"}
@@ -384,6 +414,9 @@ export default function OnboardingScreen() {
                     textAlignVertical: "center",
                   }}
                   returnKeyType="done"
+                  onSubmitEditing={() => {
+                    if (canProceed()) setStep(3);
+                  }}
                 />
               </View>
             </View>
