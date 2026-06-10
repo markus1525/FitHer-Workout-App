@@ -775,6 +775,29 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Join Discord */}
+        <TouchableOpacity
+          onPress={() => Linking.openURL("https://discord.gg/dWPwCy4GEG")}
+          style={{
+            backgroundColor: "#5865F2",
+            borderRadius: 16,
+            padding: 16,
+            marginBottom: 16,
+            flexDirection: "row",
+            alignItems: "center",
+          }}
+          activeOpacity={0.8}
+        >
+          <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center" }}>
+            <Text style={{ fontSize: 20 }}>💬</Text>
+          </View>
+          <View style={{ flex: 1, marginLeft: 12 }}>
+            <Text style={{ fontSize: 14, fontWeight: "700", color: "#FFF" }}>Join FitHer on Discord</Text>
+            <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.8)" }}>Community, tips, and support</Text>
+          </View>
+          <MaterialIcons name="arrow-forward" size={20} color="#FFF" />
+        </TouchableOpacity>
+
         {/* Settings */}
         <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginBottom: 12 }}>Settings</Text>
         <View style={{ backgroundColor: colors.surface, borderRadius: 16, overflow: "hidden", marginBottom: 24 }}>

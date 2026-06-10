@@ -1,4 +1,4 @@
-import { Text, View, TouchableOpacity, TextInput, ScrollView } from "react-native";
+import { Text, View, TouchableOpacity, TextInput, ScrollView, Linking } from "react-native";
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -151,6 +151,23 @@ export default function OnboardingScreen() {
             <Text style={{ fontSize: 14, color: colors.muted, textAlign: "center", marginTop: 8, paddingHorizontal: 16 }}>
               Let's set up your profile to personalize your experience.
             </Text>
+            <TouchableOpacity
+              onPress={() => Linking.openURL("https://discord.gg/dWPwCy4GEG")}
+              style={{
+                marginTop: 28,
+                backgroundColor: "#5865F2",
+                borderRadius: 16,
+                paddingVertical: 14,
+                paddingHorizontal: 24,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+              }}
+              activeOpacity={0.8}
+            >
+              <Text style={{ fontSize: 18 }}>💬</Text>
+              <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 15 }}>Join FitHer on Discord</Text>
+            </TouchableOpacity>
           </View>
         )}
 
