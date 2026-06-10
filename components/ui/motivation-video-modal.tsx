@@ -1,7 +1,6 @@
 import { View, Text, TouchableOpacity, Modal, Platform, StyleSheet } from "react-native";
 import { useEffect, useRef, useState } from "react";
 import { VideoView, useVideoPlayer } from "expo-video";
-import { useEvent } from "expo";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 const VIDEO_URL = "https://markus1525.github.io/FitHer-Workout-App/video/motivational.mp4";
@@ -30,20 +29,22 @@ export function MotivationVideoModal({ visible, onClose, onDontShowAgain, startM
     p.muted = true;
   });
 
-  // Native: listen for player status changes
-  // When player becomes readyToPlay and we have a pending play request, start playback
-  useEvent(Platform.OS !== "web" ? player : (null as any), "statusChange", (payload: any) => {
+  // Native only: listen for statusChange using player.addListener directly.
+  // useEvent(null, ...) crashes on web so we use useEffect + addListener instead.
+  useEffect(() => {
     if (Platform.OS === "web") return;
-    if (payload?.status === "readyToPlay" && pendingPlay.current) {
-      pendingPlay.current = false;
-      // Small delay so the VideoView surface has time to attach to the player
-      setTimeout(() => {
-        player.muted = startMuted;
-        player.play();
-        setMuted(startMuted);
-      }, 80);
-    }
-  });
+    const sub = player.addListener("statusChange", (payload: any) => {
+      if (payload?.status === "readyToPlay" && pendingPlay.current) {
+        pendingPlay.current = false;
+        setTimeout(() => {
+          player.muted = startMuted;
+          player.play();
+          setMuted(startMuted);
+        }, 80);
+      }
+    });
+    return () => sub.remove();
+  }, [player, startMuted]);
 
   // Web autoplay handling: try to play with sound if permitted, fall back to muted if blocked.
   useEffect(() => {
