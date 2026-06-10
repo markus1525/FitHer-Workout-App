@@ -27,23 +27,28 @@ export default function OnboardingScreen() {
   const router = useRouter();
   const { state, updateProfile, completeOnboarding } = useApp();
   const colors = useColors();
+
+  // ── All hooks must be declared before any conditional return ──────────────
   const [step, setStep] = useState(0);
   const [showVideo, setShowVideo] = useState(false);
-
-  useEffect(() => {
-    if (!state.isLoading && state.onboardingDone && !showVideo) {
-      router.replace("/(tabs)");
-    }
-  }, [state.isLoading, state.onboardingDone, showVideo]);
-
-  if (state.isLoading) {
-    return (
-      <ScreenContainer className="items-center justify-center">
-        <Text style={{ fontSize: 18, color: colors.muted }}>Loading...</Text>
-      </ScreenContainer>
-    );
-  }
   const [videoStartMuted, setVideoStartMuted] = useState(false);
+  const [name, setName] = useState("");
+  const [age, setAge] = useState("");
+  const [heightCm, setHeightCm] = useState("");
+  const [heightFt, setHeightFt] = useState("");
+  const [heightIn, setHeightIn] = useState("");
+  const [weight, setWeight] = useState("");
+  const [goal, setGoal] = useState("");
+  const [level, setLevel] = useState("");
+  const [unitSystem, setUnitSystem] = useState<"metric" | "imperial">("metric");
+  const [workoutsMode, setWorkoutsMode] = useState<"home" | "gym" | "both">("both");
+
+  const nameInputRef = useRef<TextInput>(null);
+  const ageInputRef = useRef<TextInput>(null);
+  const heightCmInputRef = useRef<TextInput>(null);
+  const heightFtInputRef = useRef<TextInput>(null);
+  const heightInInputRef = useRef<TextInput>(null);
+  const weightInputRef = useRef<TextInput>(null);
 
   // Pre-cache video prefs so handleComplete can read them synchronously
   // (needed to call setShowVideo(true) before any await, keeping the browser
@@ -60,24 +65,20 @@ export default function OnboardingScreen() {
     );
   }, []);
 
-  const [name, setName] = useState("");
-  const [age, setAge] = useState("");
-  // Metric uses heightCm; imperial uses heightFt + heightIn
-  const [heightCm, setHeightCm] = useState("");
-  const [heightFt, setHeightFt] = useState("");
-  const [heightIn, setHeightIn] = useState("");
-  const [weight, setWeight] = useState("");
-  const [goal, setGoal] = useState("");
-  const [level, setLevel] = useState("");
-  const [unitSystem, setUnitSystem] = useState<"metric" | "imperial">("metric");
-  const [workoutsMode, setWorkoutsMode] = useState<"home" | "gym" | "both">("both");
+  useEffect(() => {
+    if (!state.isLoading && state.onboardingDone && !showVideo) {
+      router.replace("/(tabs)");
+    }
+  }, [state.isLoading, state.onboardingDone, showVideo]);
+  // ─────────────────────────────────────────────────────────────────────────
 
-  const nameInputRef = useRef<TextInput>(null);
-  const ageInputRef = useRef<TextInput>(null);
-  const heightCmInputRef = useRef<TextInput>(null);
-  const heightFtInputRef = useRef<TextInput>(null);
-  const heightInInputRef = useRef<TextInput>(null);
-  const weightInputRef = useRef<TextInput>(null);
+  if (state.isLoading) {
+    return (
+      <ScreenContainer className="items-center justify-center">
+        <Text style={{ fontSize: 18, color: colors.muted }}>Loading...</Text>
+      </ScreenContainer>
+    );
+  }
 
   const handleComplete = async () => {
     const rawWeight = parseFloat(weight);
