@@ -57,8 +57,12 @@ self.addEventListener("fetch", (e) => {
   e.respondWith(
     fetch(e.request)
       .then((res) => {
-        // Cache successful app-shell responses
-        if (url.includes(BASE)) {
+        // Only cache complete (200) responses — partial (206) range responses
+        // from video/audio streaming cannot be stored in the Cache API.
+        // Also skip large media files to avoid filling storage.
+        const isComplete = res.status === 200;
+        const isMedia = /\.(mp4|webm|mp3|ogg|wav)(\?|$)/i.test(url);
+        if (url.includes(BASE) && isComplete && !isMedia) {
           const clone = res.clone();
           caches.open(CACHE_NAME).then((c) => c.put(e.request, clone));
         }
