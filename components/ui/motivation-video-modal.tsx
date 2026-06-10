@@ -17,6 +17,7 @@ const getAssetUrl = (path: string) => {
 };
 
 const VIDEO_URL = "https://markus1525.github.io/FitHer-Workout-App/video/motivational.mp4";
+const LOCAL_VIDEO = require("../../assets/video/motivational.mp4");
 
 interface Props {
   visible: boolean;
@@ -33,7 +34,7 @@ export function MotivationVideoModal({ visible, onClose, onDontShowAgain, startM
   const videoRef = useRef<any>(null);
 
   // Native: expo-video player (null source on web to satisfy hook rules)
-  const player = useVideoPlayer(Platform.OS !== "web" ? VIDEO_URL : null, (p) => {
+  const player = useVideoPlayer(Platform.OS !== "web" ? LOCAL_VIDEO : null, (p) => {
     p.loop = true;
     p.muted = true;
     p.play();

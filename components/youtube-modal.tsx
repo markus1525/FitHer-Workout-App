@@ -32,17 +32,23 @@ function YouTubeWebPlayer({ videoId }: { videoId: string }) {
   return (
     <WebView
       source={{
-        uri: `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`,
+        uri: `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1&origin=https://www.youtube.com`,
         headers: {
           Referer: "https://www.youtube.com",
         },
       }}
       style={{ width: playerWidth, height: playerHeight, borderRadius: 12, overflow: "hidden", backgroundColor: "black" }}
       allowsFullscreenVideo
+      allowsInlineMediaPlayback={true}
       mediaPlaybackRequiresUserAction={false}
       javaScriptEnabled
       domStorageEnabled
       originWhitelist={["*"]}
+      userAgent={
+        Platform.OS === "android"
+          ? "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Mobile Safari/537.36"
+          : "Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Mobile/15E148 Safari/604.1"
+      }
     />
   );
 }
