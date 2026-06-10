@@ -71,26 +71,22 @@ export default function ProfileScreen() {
     const isAndroid = /Android/.test(ua);
 
     if (isIOS) {
-      window.alert(
-        "Add FitHer to Home Screen (iOS Safari)\n\n" +
-        "1. Tap the Share button at the bottom of Safari (the box with an arrow pointing up).\n" +
-        "2. Scroll down and tap \"Add to Home Screen\".\n" +
-        "3. Tap \"Add\" in the top right corner.\n\n" +
-        "Note: This only works in Safari — not Chrome or other browsers on iOS."
+      showDialog(
+        "Add to Home Screen (iOS)",
+        "1. Tap the Share button at the bottom of Safari.\n2. Scroll down and tap \"Add to Home Screen\".\n3. Tap \"Add\" in the top right.\n\nNote: This only works in Safari.",
+        [{ label: "OK", onPress: dismissDialog }]
       );
     } else if (isAndroid) {
-      window.alert(
-        "Add FitHer to Home Screen (Android)\n\n" +
-        "1. Tap the three-dot menu (⋮) in your browser.\n" +
-        "2. Tap \"Add to Home screen\" or \"Install app\".\n" +
-        "3. Confirm by tapping \"Add\"."
+      showDialog(
+        "Add to Home Screen (Android)",
+        "1. Tap the three-dot menu in your browser.\n2. Tap \"Add to Home screen\" or \"Install app\".\n3. Confirm by tapping \"Add\".",
+        [{ label: "OK", onPress: dismissDialog }]
       );
     } else {
-      window.alert(
-        "Install FitHer\n\n" +
-        "In Chrome: click the install icon (⊕) in the address bar, or open the menu (⋮) and select \"Install FitHer\".\n\n" +
-        "In Edge: click the install icon in the address bar.\n\n" +
-        "In Safari (Mac): use File → Add to Dock."
+      showDialog(
+        "Install FitHer",
+        "In Chrome: click the install icon in the address bar or open the menu and select \"Install FitHer\".\n\nIn Edge: click the install icon in the address bar.\n\nIn Safari (Mac): use File > Add to Dock.",
+        [{ label: "OK", onPress: dismissDialog }]
       );
     }
   };
@@ -136,26 +132,24 @@ export default function ProfileScreen() {
       if (typeof window === "undefined") return;
       const win = window as any;
       if (!("Notification" in win)) {
-        win.alert("Your browser does not support notifications.");
+        showDialog("Not Supported", "Your browser does not support notifications.", [
+          { label: "OK", onPress: dismissDialog },
+        ]);
         setNotifEnabled(false);
         return;
       }
       if (Notification.permission === "granted") {
-        win.alert(
-          "Notifications are ON.\n\n" +
-          "To turn them off:\n" +
-          "• Chrome/Edge: click the lock icon in the address bar → Notifications → Block\n" +
-          "• Safari: Settings → Websites → Notifications → find this site → Deny\n" +
-          "• Firefox: click the lock icon → Connection Secure → More Information → Permissions"
+        showDialog(
+          "Notifications are ON",
+          "To turn them off, click the lock icon in your browser's address bar and set Notifications to Block.",
+          [{ label: "OK", onPress: dismissDialog }]
         );
         setNotifEnabled(true);
       } else if (Notification.permission === "denied") {
-        win.alert(
-          "Notifications are blocked by your browser.\n\n" +
-          "To enable them:\n" +
-          "• Chrome/Edge: click the lock icon in the address bar → Notifications → Allow\n" +
-          "• Safari: Settings → Websites → Notifications → find this site → Allow\n" +
-          "• Firefox: click the lock icon → Permissions → Notifications → Allow"
+        showDialog(
+          "Notifications Blocked",
+          "To enable them, click the lock icon in your browser's address bar and set Notifications to Allow.",
+          [{ label: "OK", onPress: dismissDialog }]
         );
         setNotifEnabled(false);
       } else {
@@ -169,7 +163,9 @@ export default function ProfileScreen() {
           await scheduleDailyWorkoutReminder(8);
           await scheduleDailyWaterReminder(12);
         } else {
-          win.alert("Notifications blocked. You can enable them in your browser's site settings.");
+          showDialog("Notifications Blocked", "You can enable them in your browser's site settings.", [
+            { label: "OK", onPress: dismissDialog },
+          ]);
         }
       }
       return;
@@ -344,13 +340,9 @@ export default function ProfileScreen() {
       }
     } catch (error) {
       console.error("Export error", error);
-      if (Platform.OS === "web") {
-        window.alert("Failed to export data. Please try again.");
-      } else {
-        showDialog("Export Failed", "Failed to export data. Please try again.", [
-          { label: "OK", onPress: dismissDialog },
-        ]);
-      }
+      showDialog("Export Failed", "Failed to export data. Please try again.", [
+        { label: "OK", onPress: dismissDialog },
+      ]);
     }
   };
 
@@ -370,9 +362,13 @@ export default function ProfileScreen() {
         if (success) {
           await refreshData();
           setShowImportModal(false);
-          window.alert("Data imported successfully! Your profile, history, and settings have been updated.");
+          showDialog("Import Successful", "Your profile, history, and settings have been updated.", [
+            { label: "OK", onPress: dismissDialog },
+          ]);
         } else {
-          window.alert("Failed to import data. Please verify that the file is a valid FitHer backup file.");
+          showDialog("Import Failed", "Please verify that the file is a valid FitHer backup file.", [
+            { label: "OK", onPress: dismissDialog },
+          ]);
         }
       };
       reader.readAsText(file);
@@ -389,30 +385,18 @@ export default function ProfileScreen() {
         await refreshData();
         setImportText("");
         setShowImportModal(false);
-        if (Platform.OS === "web") {
-          window.alert("Data imported successfully! Your profile, history, and settings have been updated.");
-        } else {
-          showDialog("Import Successful", "Your profile, history, and settings have been updated.", [
-            { label: "OK", onPress: dismissDialog },
-          ]);
-        }
+        showDialog("Import Successful", "Your profile, history, and settings have been updated.", [
+          { label: "OK", onPress: dismissDialog },
+        ]);
       } else {
-        if (Platform.OS === "web") {
-          window.alert("Failed to import data. Please check that you pasted a valid FitHer backup JSON string.");
-        } else {
-          showDialog("Import Failed", "Please check that you pasted a valid FitHer backup JSON string.", [
-            { label: "OK", onPress: dismissDialog },
-          ]);
-        }
-      }
-    } catch (e) {
-      if (Platform.OS === "web") {
-        window.alert("Error importing data. Invalid format.");
-      } else {
-        showDialog("Import Error", "Invalid backup data format.", [
+        showDialog("Import Failed", "Please check that you pasted a valid FitHer backup JSON string.", [
           { label: "OK", onPress: dismissDialog },
         ]);
       }
+    } catch (e) {
+      showDialog("Import Error", "Invalid backup data format.", [
+        { label: "OK", onPress: dismissDialog },
+      ]);
     } finally {
       setImporting(false);
     }
@@ -424,21 +408,14 @@ export default function ProfileScreen() {
       router.replace("/onboarding");
     };
 
-    if (Platform.OS === "web") {
-      const confirmed = window.confirm(
-        "Reset all data?\n\nThis will delete your profile, workout history, and all settings. You will go back to the welcome screen."
-      );
-      if (confirmed) doReset();
-    } else {
-      showDialog(
-        "Reset All Data",
-        "This will delete your profile, workout history, and all settings. You will go back to the welcome screen.",
-        [
-          { label: "Cancel", style: "cancel", onPress: dismissDialog },
-          { label: "Reset", style: "destructive", onPress: () => { dismissDialog(); doReset(); } },
-        ]
-      );
-    }
+    showDialog(
+      "Reset All Data",
+      "This will delete your profile, workout history, and all settings. You will go back to the welcome screen.",
+      [
+        { label: "Cancel", style: "cancel", onPress: dismissDialog },
+        { label: "Reset", style: "destructive", onPress: () => { dismissDialog(); doReset(); } },
+      ]
+    );
   };
 
   return (
