@@ -26,6 +26,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       Object.entries(palette).forEach(([token, value]) => {
         root.style.setProperty(`--color-${token}`, value);
       });
+      root.style.backgroundColor = palette.background;
+      if (document.body) {
+        document.body.style.backgroundColor = palette.background;
+      }
     }
   }, []);
 

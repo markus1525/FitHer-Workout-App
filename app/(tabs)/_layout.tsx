@@ -7,8 +7,8 @@ import { useColors } from "@/hooks/use-colors";
 export default function TabLayout() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const bottomPadding = Platform.OS === "web" ? 0 : Math.max(insets.bottom, 8);
-  const tabBarHeight = Platform.OS === "web" ? 60 : 56 + bottomPadding;
+  const bottomPadding = Math.max(insets.bottom, Platform.OS === "web" ? 0 : 8);
+  const tabBarHeight = 56 + bottomPadding;
 
   return (
     <Tabs
@@ -18,7 +18,7 @@ export default function TabLayout() {
         headerShown: false,
         tabBarStyle: {
           paddingTop: Platform.OS === "web" ? 0 : 8,
-          paddingBottom: Platform.OS === "web" ? 0 : bottomPadding,
+          paddingBottom: bottomPadding,
           height: tabBarHeight,
           backgroundColor: colors.background,
           borderTopColor: colors.border,

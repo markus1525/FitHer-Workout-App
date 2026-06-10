@@ -9,8 +9,10 @@ import "react-native-reanimated";
 import { Platform, View, Text, TouchableOpacity, Linking } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import "@/lib/_core/nativewind-pressable";
-import { ThemeProvider } from "@/lib/theme-provider";
+import { ThemeProvider, useThemeContext } from "@/lib/theme-provider";
 import { useColors } from "@/hooks/use-colors";
+import { DarkTheme, DefaultTheme, ThemeProvider as NavigationProvider } from "@react-navigation/native";
+import { SchemeColors } from "@/constants/theme";
 import {
   SafeAreaFrameContext,
   SafeAreaInsetsContext,
@@ -42,6 +44,29 @@ function ThemedRoot({ children }: { children: React.ReactNode }) {
       {children}
     </GestureHandlerRootView>
   );
+}
+
+function NavThemeWrapper({ children }: { children: React.ReactNode }) {
+  const { colorScheme } = useThemeContext();
+
+  const customTheme = useMemo(() => {
+    const isDark = colorScheme === "dark";
+    const baseTheme = isDark ? DarkTheme : DefaultTheme;
+    const palette = SchemeColors[colorScheme];
+
+    return {
+      ...baseTheme,
+      colors: {
+        ...baseTheme.colors,
+        background: palette.background,
+        card: palette.background,
+        text: palette.foreground,
+        border: palette.border,
+      },
+    };
+  }, [colorScheme]);
+
+  return <NavigationProvider value={customTheme}>{children}</NavigationProvider>;
 }
 
 export default function RootLayout() {
@@ -178,15 +203,17 @@ export default function RootLayout() {
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
         <QueryClientProvider client={queryClient}>
           <AppProvider>
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="onboarding" options={{ presentation: "fullScreenModal" }} />
-              <Stack.Screen name="workout-detail" />
-              <Stack.Screen name="exercise-player" />
-              <Stack.Screen name="create-plan" />
-              <Stack.Screen name="bmi-calculator" />
-              <Stack.Screen name="oauth/callback" />
-            </Stack>
+            <NavThemeWrapper>
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="onboarding" options={{ presentation: "fullScreenModal" }} />
+                <Stack.Screen name="workout-detail" />
+                <Stack.Screen name="exercise-player" />
+                <Stack.Screen name="create-plan" />
+                <Stack.Screen name="bmi-calculator" />
+                <Stack.Screen name="oauth/callback" />
+              </Stack>
+            </NavThemeWrapper>
             <StatusBar style="auto" />
           </AppProvider>
         </QueryClientProvider>

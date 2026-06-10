@@ -6,7 +6,7 @@
   "scope": "/FitHer-Workout-App/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#FFF0F5",
+  "background_color": "#1A1A2E",
   "theme_color": "#E91E63",
   "icons": [
     {

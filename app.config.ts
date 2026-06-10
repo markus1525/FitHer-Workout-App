@@ -87,7 +87,7 @@ const config: ExpoConfig = {
     shortName: "FitHer",
     description: "Your personal home workout app designed for women.",
     themeColor: "#E91E63",
-    backgroundColor: "#FFF0F5",
+    backgroundColor: "#1A1A2E",
     lang: "en",
   },
   plugins: [
@@ -111,7 +111,7 @@ const config: ExpoConfig = {
         image: "./assets/images/splash-icon.png",
         imageWidth: 200,
         resizeMode: "contain",
-        backgroundColor: "#FFF0F5",
+        backgroundColor: "#1A1A2E",
         dark: {
           backgroundColor: "#1A1A2E",
         },
