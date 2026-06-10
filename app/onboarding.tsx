@@ -1,5 +1,5 @@
 import { Text, View, TouchableOpacity, TextInput, ScrollView, Linking } from "react-native";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -25,10 +25,24 @@ const FITNESS_LEVELS = [
 
 export default function OnboardingScreen() {
   const router = useRouter();
-  const { updateProfile, completeOnboarding } = useApp();
+  const { state, updateProfile, completeOnboarding } = useApp();
   const colors = useColors();
   const [step, setStep] = useState(0);
   const [showVideo, setShowVideo] = useState(false);
+
+  useEffect(() => {
+    if (!state.isLoading && state.onboardingDone && !showVideo) {
+      router.replace("/(tabs)");
+    }
+  }, [state.isLoading, state.onboardingDone, showVideo]);
+
+  if (state.isLoading) {
+    return (
+      <ScreenContainer className="items-center justify-center">
+        <Text style={{ fontSize: 18, color: colors.muted }}>Loading...</Text>
+      </ScreenContainer>
+    );
+  }
   const [videoStartMuted, setVideoStartMuted] = useState(false);
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
