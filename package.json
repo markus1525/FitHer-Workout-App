@@ -17,7 +17,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "qr": "node scripts/generate_qr.mjs",
-    "export": "npx expo export --platform web",
+    "export": "npx expo export --platform web && node scripts/patch-web.mjs",
     "deploy": "echo '.DS_Store' > dist/.gitignore && gh-pages -d dist --nojekyll --dotfiles"
   },
   "dependencies": {

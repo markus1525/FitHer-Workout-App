@@ -147,7 +147,12 @@ export default function ProfileScreen() {
         const isGranted = permission === "granted";
         setNotifEnabled(isGranted);
         await AsyncStorage.setItem("fither_notifications_enabled", isGranted ? "true" : "false");
-        if (!isGranted) {
+        if (isGranted) {
+          // Schedule daily reminders via service worker
+          const { scheduleDailyWorkoutReminder, scheduleDailyWaterReminder } = await import("@/lib/web-notifications");
+          await scheduleDailyWorkoutReminder(8);
+          await scheduleDailyWaterReminder(12);
+        } else {
           win.alert("Notifications blocked. You can enable them in your browser's site settings.");
         }
       }

@@ -84,7 +84,7 @@ export default function OnboardingScreen() {
     if (videoEnabled !== "false") {
       setShowVideo(true);
     } else {
-      router.replace("/");
+      router.replace("/(tabs)");
     }
   };
 
@@ -105,7 +105,7 @@ export default function OnboardingScreen() {
 
   const handleVideoClose = () => {
     setShowVideo(false);
-    router.replace("/");
+    router.replace("/(tabs)");
   };
 
   const handleDontShowAgain = async () => {
