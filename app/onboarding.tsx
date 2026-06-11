@@ -9,6 +9,7 @@ import { useColors } from "@/hooks/use-colors";
 import { ftInToCm } from "@/lib/utils";
 import { MotivationVideoModal } from "@/components/ui/motivation-video-modal";
 import { videoSession } from "@/lib/video-session";
+import { generateScheduleFromGoal } from "@/lib/plan-generator";
 
 const FITNESS_GOALS = [
   { id: "lose_weight", label: "Lose Weight", icon: "🔥", desc: "Burn fat and slim down" },
@@ -25,7 +26,7 @@ const FITNESS_LEVELS = [
 
 export default function OnboardingScreen() {
   const router = useRouter();
-  const { state, updateProfile, completeOnboarding } = useApp();
+  const { state, updateProfile, completeOnboarding, updateSchedule, updateGoals } = useApp();
   const colors = useColors();
 
   // ── All hooks must be declared before any conditional return ──────────────
@@ -119,6 +120,17 @@ export default function OnboardingScreen() {
       unitSystem: unitSystem,
       workoutsMode: workoutsMode,
     });
+
+    // Auto-build her weekly schedule from the goal she picked, so she finishes
+    // onboarding with a ready plan for each day (still editable later).
+    const { schedule, workoutDays } = generateScheduleFromGoal(
+      goal || "stay_active",
+      workoutsMode,
+      (level as "beginner" | "intermediate" | "advanced") || "beginner"
+    );
+    await updateSchedule(schedule);
+    await updateGoals({ ...state.goals, weeklyWorkouts: workoutDays || state.goals.weeklyWorkouts });
+
     await completeOnboarding();
 
     if (!shouldShowVideo) {

@@ -23,10 +23,12 @@ export interface WorkoutPlan {
   description: string;
   difficulty: "beginner" | "intermediate" | "advanced";
   duration: number; // minutes
-  exercises: string[]; // exercise IDs
+  exercises: string[]; // exercise IDs (the main workout)
   bodyParts: string[];
   isDefault: boolean;
   mode?: "home" | "gym" | "both";
+  warmup?: string[]; // optional warmup exercise IDs
+  cooldown?: string[]; // optional cooldown exercise IDs
 }
 
 export const EXERCISES: Exercise[] = [
@@ -804,6 +806,39 @@ export const EXERCISES: Exercise[] = [
 
 export const DEFAULT_WORKOUT_PLANS: WorkoutPlan[] = [
   {
+    id: "quick-10",
+    name: "Quick 10-Minute Burn",
+    description: "Short on time? A fast full-body circuit you can do anywhere.",
+    difficulty: "beginner",
+    duration: 10,
+    exercises: ["jumping-jacks", "squats", "push-ups", "mountain-climbers", "plank"],
+    bodyParts: ["Full Body"],
+    isDefault: true,
+    mode: "home",
+  },
+  {
+    id: "core-focus",
+    name: "Core Focus",
+    description: "Target your abs and obliques with a focused core session.",
+    difficulty: "beginner",
+    duration: 15,
+    exercises: ["crunches", "bicycle-crunches", "leg-raises", "russian-twists", "bird-dog", "plank"],
+    bodyParts: ["Core"],
+    isDefault: true,
+    mode: "home",
+  },
+  {
+    id: "glutes-focus",
+    name: "Glutes Focus",
+    description: "Lift and shape with a glute-only burn. No equipment needed.",
+    difficulty: "beginner",
+    duration: 15,
+    exercises: ["glute-bridges", "donkey-kicks", "fire-hydrants", "clamshells", "sumo-squats"],
+    bodyParts: ["Glutes"],
+    isDefault: true,
+    mode: "home",
+  },
+  {
     id: "beginner-full-body",
     name: "Beginner Full Body",
     description: "Perfect for starting your fitness journey. Low impact, easy to follow.",
@@ -1040,3 +1075,26 @@ export const CYCLE_PHASES = {
     tips: "Energy may dip. Focus on steady-state cardio, yoga, and moderate strength work.",
   },
 };
+
+// ── Warmup and cooldown phases ──────────────────────────────────────────────
+const DEFAULT_WARMUP = ["hip-circles", "arm-swings", "torso-twists"];
+const DEFAULT_COOLDOWN = ["standing-quad-stretch", "cat-cow", "child-pose"];
+
+/**
+ * Returns the warmup, main, and cooldown exercise IDs for a plan. If a plan
+ * does not define its own warmup or cooldown, a sensible default is used.
+ * Recovery / stretch plans get no extra phases.
+ */
+export function getPlanPhases(plan: WorkoutPlan): { warmup: string[]; main: string[]; cooldown: string[] } {
+  const isRecovery = /stretch|recovery/i.test(plan.name) || plan.id === "dynamic-warmup-stretch";
+  const exists = (id: string) => EXERCISES.some((e) => e.id === id);
+  const warmup = (plan.warmup ?? (isRecovery ? [] : DEFAULT_WARMUP)).filter(exists);
+  const cooldown = (plan.cooldown ?? (isRecovery ? [] : DEFAULT_COOLDOWN)).filter(exists);
+  return { warmup, main: plan.exercises, cooldown };
+}
+
+/** The full ordered list of exercise IDs for a plan (warmup + main + cooldown). */
+export function getPlanSequence(plan: WorkoutPlan): string[] {
+  const { warmup, main, cooldown } = getPlanPhases(plan);
+  return [...warmup, ...main, ...cooldown];
+}

@@ -12,15 +12,17 @@ import { useThemeContext } from "@/lib/theme-provider";
 import { cmToFtIn, ftInToCm, formatHeight } from "@/lib/utils";
 import { exportAppData, importAppData } from "@/lib/storage";
 import { DEFAULT_WORKOUT_PLANS, WorkoutPlan } from "@/data/exercises";
+import { generateScheduleFromGoal, GOAL_LABELS } from "@/lib/plan-generator";
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { state, updateProfile, updateSchedule, resetAllData, refreshData } = useApp();
+  const { state, updateProfile, updateSchedule, updateGoals, resetAllData, refreshData } = useApp();
   const colors = useColors();
   const { colorScheme, setColorScheme } = useThemeContext();
   const [editing, setEditing] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [planPickerDay, setPlanPickerDay] = useState<number | null>(null);
+  const [goalChoice, setGoalChoice] = useState<string>(state.profile?.fitnessGoal || "stay_active");
 
   // Custom dialog state (replaces Alert.alert on native)
   const [dialog, setDialog] = useState<{
@@ -323,6 +325,28 @@ export default function ProfileScreen() {
     newSchedule[dayIndex] = { ...newSchedule[dayIndex], isRestDay: false, planId };
     await updateSchedule(newSchedule);
     setPlanPickerDay(null);
+  };
+
+  const regenerateFromGoal = () => {
+    showDialog(
+      "Generate weekly plan?",
+      `This sets a plan for each day based on "${GOAL_LABELS[goalChoice] || goalChoice}". It replaces your current weekly schedule. You can still edit any day afterward.`,
+      [
+        { label: "Cancel", style: "cancel", onPress: dismissDialog },
+        {
+          label: "Generate",
+          onPress: async () => {
+            const mode = state.profile?.workoutsMode || "both";
+            const level = (state.profile?.fitnessLevel as "beginner" | "intermediate" | "advanced") || "beginner";
+            const { schedule, workoutDays } = generateScheduleFromGoal(goalChoice, mode, level);
+            await updateSchedule(schedule);
+            if (state.profile) await updateProfile({ ...state.profile, fitnessGoal: goalChoice });
+            await updateGoals({ ...state.goals, weeklyWorkouts: workoutDays || state.goals.weeklyWorkouts });
+            dismissDialog();
+          },
+        },
+      ]
+    );
   };
 
   const pickProfileImage = async () => {
@@ -815,6 +839,43 @@ export default function ProfileScreen() {
           </View>
           <MaterialIcons name="chevron-right" size={22} color={colors.muted} />
         </TouchableOpacity>
+
+        {/* Auto Weekly Plan from goal */}
+        <View className="rounded-2xl p-4 mb-4" style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
+          <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 4 }}>Auto Weekly Plan</Text>
+          <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 12 }}>
+            Pick your goal and FitHer fills in a plan for each day. No need to choose exercises yourself.
+          </Text>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+            {(["lose_weight", "tone_up", "build_strength", "stay_active"] as const).map((g) => (
+              <TouchableOpacity
+                key={g}
+                onPress={() => setGoalChoice(g)}
+                style={{
+                  paddingHorizontal: 14,
+                  paddingVertical: 8,
+                  borderRadius: 20,
+                  backgroundColor: goalChoice === g ? colors.primary : colors.background,
+                  borderWidth: goalChoice === g ? 0 : 1,
+                  borderColor: colors.border,
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={{ fontSize: 13, fontWeight: "600", color: goalChoice === g ? "#FFF" : colors.foreground }}>
+                  {GOAL_LABELS[g]}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <TouchableOpacity
+            onPress={regenerateFromGoal}
+            style={{ backgroundColor: colors.primary, borderRadius: 12, paddingVertical: 12, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 6 }}
+            activeOpacity={0.8}
+          >
+            <MaterialIcons name="auto-awesome" size={18} color="#FFF" />
+            <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 14 }}>Generate Weekly Plan</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Workout Schedule */}
         <View className="rounded-2xl p-4 mb-4" style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>

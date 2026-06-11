@@ -10,7 +10,7 @@ import { AppDialog, DialogButton } from "@/components/ui/app-dialog";
 import { YouTubeModal } from "@/components/youtube-modal";
 import { MusicShortcuts } from "@/components/music-shortcuts";
 import { useApp } from "@/lib/app-context";
-import { DEFAULT_WORKOUT_PLANS, EXERCISES, Exercise } from "@/data/exercises";
+import { DEFAULT_WORKOUT_PLANS, EXERCISES, Exercise, getPlanSequence } from "@/data/exercises";
 import { useColors } from "@/hooks/use-colors";
 import { WorkoutHistoryEntry } from "@/lib/storage";
 
@@ -27,7 +27,9 @@ export default function ExercisePlayerScreen() {
     ? state.customPlans.find((p) => p.id === planId)
     : DEFAULT_WORKOUT_PLANS.find((p) => p.id === planId);
 
-  const exercises = plan?.exercises.map((id) => EXERCISES.find((e) => e.id === id)).filter(Boolean) as Exercise[] || [];
+  const exercises = plan
+    ? (getPlanSequence(plan).map((id) => EXERCISES.find((e) => e.id === id)).filter(Boolean) as Exercise[])
+    : [];
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);

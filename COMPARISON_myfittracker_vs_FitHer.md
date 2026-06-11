@@ -322,6 +322,20 @@ Build and deploy notes for this batch:
 
 ---
 
+## 16. Implementation status - fourth batch (content + auto plan)
+
+The exercises, plans, and a goal-based auto scheduler.
+
+- Goal-based auto weekly plan. New `lib/plan-generator.ts` builds a plan for each weekday from the user's goal (lose weight, tone up, build strength, stay active), her workout mode, and level. She never has to pick exercises for the day. Onboarding now generates the schedule on finish (`app/onboarding.tsx`), and Profile has an Auto Weekly Plan card to change the goal and regenerate later (`app/(tabs)/profile.tsx`). She can still edit any day in the Workout Schedule section.
+- Warmup and cooldown phases. `WorkoutPlan` gained optional `warmup` and `cooldown`, and `getPlanPhases` / `getPlanSequence` in `data/exercises.ts` give every plan a warmup and cooldown (sensible defaults when a plan does not set its own). The detail screen shows Warm Up, Main Workout, and Cool Down sections, and the player runs through all three.
+- More curated plans. Added Quick 10-Minute Burn, Core Focus, and Glutes Focus to the default plans.
+- Coaching for every exercise. New `data/exercise-coaching.ts` holds accurate target muscles, how-to steps, and common mistakes for the full exercise library, shown on the workout detail screen. Written by hand for accuracy rather than auto-filled.
+- Music shortcuts updated. All apps now sit equally in a 2 by 2 grid, and Flow (the Myanmar music app) was added alongside Spotify, Apple Music, and YouTube Music.
+
+Verified with `tsc --noEmit` (clean) and a check that every plan id the generator and phase defaults reference actually exists.
+
+---
+
 ### Bottom line
 
 myfittracker is stronger on the daily training experience (today's session, ticking, per day editing, working streak, and the BMI plus calorie dashboard). FitHer is stronger as a real, scalable app with onboarding, cycle tracking, and a follow along player. The best move is to keep FitHer's structure and bring over myfittracker's four daily strengths in this order: show today's session on Home, fix the streak, show history, then add per exercise ticking and the BMI dashboard.

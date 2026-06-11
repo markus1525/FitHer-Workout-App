@@ -6,7 +6,8 @@ import { ScreenContainer } from "@/components/screen-container";
 import { YouTubeModal } from "@/components/youtube-modal";
 import { MusicShortcuts } from "@/components/music-shortcuts";
 import { useApp } from "@/lib/app-context";
-import { DEFAULT_WORKOUT_PLANS, EXERCISES, WorkoutPlan } from "@/data/exercises";
+import { DEFAULT_WORKOUT_PLANS, EXERCISES, WorkoutPlan, Exercise, getPlanPhases } from "@/data/exercises";
+import { EXERCISE_COACHING } from "@/data/exercise-coaching";
 import { useColors } from "@/hooks/use-colors";
 
 export default function WorkoutDetailScreen() {
@@ -35,7 +36,12 @@ export default function WorkoutDetailScreen() {
     );
   }
 
-  const exercises = plan.exercises.map((id) => EXERCISES.find((e) => e.id === id)).filter(Boolean);
+  const phases = getPlanPhases(plan);
+  const resolve = (ids: string[]) => ids.map((id) => EXERCISES.find((e) => e.id === id)).filter(Boolean) as Exercise[];
+  const warmupEx = resolve(phases.warmup);
+  const mainEx = resolve(phases.main);
+  const cooldownEx = resolve(phases.cooldown);
+  const exercises = [...warmupEx, ...mainEx, ...cooldownEx];
   const totalCalories = exercises.reduce((sum, e) => sum + (e?.calories || 0), 0);
 
   const getDifficultyColor = (d: string) => {
@@ -47,6 +53,79 @@ export default function WorkoutDetailScreen() {
   const openVideoPreview = (youtubeId: string, exerciseName: string) => {
     setVideoModal({ visible: true, videoId: youtubeId, title: exerciseName });
   };
+
+  const renderExerciseCard = (exercise: Exercise) => {
+    const coaching = EXERCISE_COACHING[exercise.id] || {
+      targetMuscles: exercise.targetMuscles,
+      formTips: exercise.formTips,
+      commonMistakes: exercise.commonMistakes,
+    };
+    return (
+      <View key={exercise.id} style={{ backgroundColor: colors.surface, borderRadius: 12, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: colors.border }}>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary + "15", alignItems: "center", justifyContent: "center", marginRight: 12 }}>
+            <Text style={{ fontSize: 18 }}>{exercise.image}</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground }}>{exercise.name}</Text>
+            <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>
+              {exercise.reps ? `${exercise.reps} reps` : `${exercise.duration}s`}
+              {exercise.sets ? ` × ${exercise.sets} sets` : ""}
+              {" • "}{exercise.calories} cal
+            </Text>
+          </View>
+          <TouchableOpacity
+            onPress={() => openVideoPreview(exercise.youtubeId, exercise.name)}
+            style={{ backgroundColor: "#FF0000", borderRadius: 18, width: 36, height: 36, alignItems: "center", justifyContent: "center" }}
+            activeOpacity={0.7}
+          >
+            <MaterialIcons name="play-arrow" size={20} color="#FFF" style={{ lineHeight: 20, marginLeft: 2 }} />
+          </TouchableOpacity>
+        </View>
+        <Text style={{ fontSize: 12, color: colors.muted, marginTop: 8, marginLeft: 52 }} numberOfLines={2}>{exercise.description}</Text>
+
+        {coaching.targetMuscles && coaching.targetMuscles.length > 0 && (
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 8, marginLeft: 52 }}>
+            {coaching.targetMuscles.map((muscle) => (
+              <View key={muscle} style={{ backgroundColor: colors.primary + "15", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 }}>
+                <Text style={{ fontSize: 11, color: colors.primary, fontWeight: "500" }}>{muscle}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {coaching.formTips && coaching.formTips.length > 0 && (
+          <View style={{ marginTop: 10, marginLeft: 52 }}>
+            <Text style={{ fontSize: 12, fontWeight: "600", color: colors.foreground, marginBottom: 4 }}>How to do it</Text>
+            {coaching.formTips.map((tip, i) => (
+              <View key={i} style={{ flexDirection: "row", marginBottom: 3 }}>
+                <Text style={{ fontSize: 12, color: colors.primary, marginRight: 6, fontWeight: "700" }}>{i + 1}.</Text>
+                <Text style={{ fontSize: 12, color: colors.muted, flex: 1 }}>{tip}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {coaching.commonMistakes && coaching.commonMistakes.length > 0 && (
+          <View style={{ marginTop: 8, marginLeft: 52 }}>
+            <Text style={{ fontSize: 12, fontWeight: "600", color: colors.error, marginBottom: 4 }}>Avoid</Text>
+            {coaching.commonMistakes.map((m, i) => (
+              <View key={i} style={{ flexDirection: "row", marginBottom: 3 }}>
+                <Text style={{ fontSize: 12, color: colors.error, marginRight: 6 }}>✕</Text>
+                <Text style={{ fontSize: 12, color: colors.muted, flex: 1 }}>{m}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+      </View>
+    );
+  };
+
+  const PhaseHeader = ({ label }: { label: string }) => (
+    <Text style={{ fontSize: 13, fontWeight: "700", color: colors.primary, marginTop: 8, marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>
+      {label}
+    </Text>
+  );
 
   return (
     <ScreenContainer className="px-4 pt-2">
@@ -97,74 +176,27 @@ export default function WorkoutDetailScreen() {
         {/* Music quick links */}
         <MusicShortcuts />
 
-        {/* Exercise List */}
-        <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginBottom: 12 }}>
-          Exercises ({exercises.length})
+        {/* Exercise List, split into phases */}
+        <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginBottom: 4 }}>
+          Workout ({exercises.length} moves)
         </Text>
-        {exercises.map((exercise, index) => {
-          if (!exercise) return null;
-          return (
-            <View key={exercise.id} style={{ backgroundColor: colors.surface, borderRadius: 12, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: colors.border }}>
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary + "15", alignItems: "center", justifyContent: "center", marginRight: 12 }}>
-                  <Text style={{ fontSize: 18 }}>{exercise.image}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground }}>{exercise.name}</Text>
-                  <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>
-                    {exercise.reps ? `${exercise.reps} reps` : `${exercise.duration}s`}
-                    {exercise.sets ? ` × ${exercise.sets} sets` : ""}
-                    {" • "}{exercise.calories} cal
-                  </Text>
-                </View>
-                {/* YouTube Preview Button - opens in-app modal */}
-                <TouchableOpacity
-                  onPress={() => openVideoPreview(exercise.youtubeId, exercise.name)}
-                  style={{ backgroundColor: "#FF0000", borderRadius: 18, width: 36, height: 36, alignItems: "center", justifyContent: "center" }}
-                  activeOpacity={0.7}
-                >
-                  <MaterialIcons name="play-arrow" size={20} color="#FFF" style={{ lineHeight: 20, marginLeft: 2 }} />
-                </TouchableOpacity>
-              </View>
-              <Text style={{ fontSize: 12, color: colors.muted, marginTop: 8, marginLeft: 52 }} numberOfLines={2}>{exercise.description}</Text>
 
-              {/* Optional coaching detail */}
-              {exercise.targetMuscles && exercise.targetMuscles.length > 0 && (
-                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 8, marginLeft: 52 }}>
-                  {exercise.targetMuscles.map((muscle) => (
-                    <View key={muscle} style={{ backgroundColor: colors.primary + "15", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 }}>
-                      <Text style={{ fontSize: 11, color: colors.primary, fontWeight: "500" }}>{muscle}</Text>
-                    </View>
-                  ))}
-                </View>
-              )}
+        {warmupEx.length > 0 && (
+          <>
+            <PhaseHeader label="🔥 Warm Up" />
+            {warmupEx.map(renderExerciseCard)}
+          </>
+        )}
 
-              {exercise.formTips && exercise.formTips.length > 0 && (
-                <View style={{ marginTop: 10, marginLeft: 52 }}>
-                  <Text style={{ fontSize: 12, fontWeight: "600", color: colors.foreground, marginBottom: 4 }}>How to do it</Text>
-                  {exercise.formTips.map((tip, i) => (
-                    <View key={i} style={{ flexDirection: "row", marginBottom: 3 }}>
-                      <Text style={{ fontSize: 12, color: colors.primary, marginRight: 6, fontWeight: "700" }}>{i + 1}.</Text>
-                      <Text style={{ fontSize: 12, color: colors.muted, flex: 1 }}>{tip}</Text>
-                    </View>
-                  ))}
-                </View>
-              )}
+        <PhaseHeader label="💪 Main Workout" />
+        {mainEx.map(renderExerciseCard)}
 
-              {exercise.commonMistakes && exercise.commonMistakes.length > 0 && (
-                <View style={{ marginTop: 8, marginLeft: 52 }}>
-                  <Text style={{ fontSize: 12, fontWeight: "600", color: colors.error, marginBottom: 4 }}>Avoid</Text>
-                  {exercise.commonMistakes.map((m, i) => (
-                    <View key={i} style={{ flexDirection: "row", marginBottom: 3 }}>
-                      <Text style={{ fontSize: 12, color: colors.error, marginRight: 6 }}>✕</Text>
-                      <Text style={{ fontSize: 12, color: colors.muted, flex: 1 }}>{m}</Text>
-                    </View>
-                  ))}
-                </View>
-              )}
-            </View>
-          );
-        })}
+        {cooldownEx.length > 0 && (
+          <>
+            <PhaseHeader label="🧘 Cool Down" />
+            {cooldownEx.map(renderExerciseCard)}
+          </>
+        )}
       </ScrollView>
 
       {/* Start Workout Button */}

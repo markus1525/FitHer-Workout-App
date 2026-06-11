@@ -10,11 +10,13 @@ type MusicApp = {
   webUrl: string;
 };
 
-// Spotify is listed first on purpose (most users).
+// All apps are shown equally. Flow is the Myanmar music app.
 const MUSIC_APPS: MusicApp[] = [
   { key: "spotify", label: "Spotify", color: "#1DB954", appUrl: "spotify://", webUrl: "https://open.spotify.com/search/workout" },
   { key: "apple", label: "Apple Music", color: "#FA243C", appUrl: "music://", webUrl: "https://music.apple.com/us/search?term=workout" },
   { key: "ytmusic", label: "YouTube Music", color: "#FF0000", appUrl: "https://music.youtube.com/search?q=workout", webUrl: "https://music.youtube.com/search?q=workout" },
+  // Flow Myanmar: the https link opens the Flow app if installed, otherwise the site.
+  { key: "flow", label: "Flow", color: "#8B2FC9", appUrl: "https://www.flow.com.mm/", webUrl: "https://www.flow.com.mm/" },
 ];
 
 function openMusic(app: MusicApp) {
@@ -37,26 +39,28 @@ export function MusicShortcuts({ compact = false }: { compact?: boolean }) {
 
   if (compact) {
     return (
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", flexWrap: "wrap", gap: 6 }}>
         <MaterialIcons name="headphones" size={16} color={colors.muted} />
         {MUSIC_APPS.map((app) => (
           <TouchableOpacity
             key={app.key}
             onPress={() => openMusic(app)}
             style={{
-              paddingHorizontal: 12,
+              paddingHorizontal: 10,
               paddingVertical: 6,
               borderRadius: 16,
-              backgroundColor: app.key === "spotify" ? app.color : "transparent",
-              borderWidth: app.key === "spotify" ? 0 : 1,
+              backgroundColor: colors.surface,
+              borderWidth: 1,
               borderColor: colors.border,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 4,
             }}
             activeOpacity={0.7}
             accessibilityLabel={`Open ${app.label}`}
           >
-            <Text style={{ fontSize: 12, fontWeight: "600", color: app.key === "spotify" ? "#FFF" : colors.foreground }}>
-              {app.label}
-            </Text>
+            <MaterialIcons name="music-note" size={13} color={app.color} />
+            <Text style={{ fontSize: 12, fontWeight: "600", color: colors.foreground }}>{app.label}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -69,35 +73,33 @@ export function MusicShortcuts({ compact = false }: { compact?: boolean }) {
         <MaterialIcons name="headphones" size={18} color={colors.primary} />
         <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginLeft: 8 }}>Music for your workout</Text>
       </View>
-      <View style={{ flexDirection: "row", gap: 8 }}>
-        {MUSIC_APPS.map((app) => {
-          const primary = app.key === "spotify";
-          return (
-            <TouchableOpacity
-              key={app.key}
-              onPress={() => openMusic(app)}
-              style={{
-                flex: primary ? 1.4 : 1,
-                paddingVertical: 12,
-                borderRadius: 12,
-                alignItems: "center",
-                justifyContent: "center",
-                flexDirection: "row",
-                gap: 6,
-                backgroundColor: primary ? app.color : colors.background,
-                borderWidth: primary ? 0 : 1,
-                borderColor: colors.border,
-              }}
-              activeOpacity={0.8}
-              accessibilityLabel={`Open ${app.label}`}
-            >
-              <MaterialIcons name="music-note" size={16} color={primary ? "#FFF" : app.color} />
-              <Text style={{ fontSize: 12, fontWeight: "700", color: primary ? "#FFF" : colors.foreground }} numberOfLines={1}>
-                {app.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
+      {/* 2 x 2 grid, all apps equal */}
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+        {MUSIC_APPS.map((app) => (
+          <TouchableOpacity
+            key={app.key}
+            onPress={() => openMusic(app)}
+            style={{
+              width: "48%",
+              paddingVertical: 12,
+              borderRadius: 12,
+              alignItems: "center",
+              justifyContent: "center",
+              flexDirection: "row",
+              gap: 6,
+              backgroundColor: colors.background,
+              borderWidth: 1,
+              borderColor: colors.border,
+            }}
+            activeOpacity={0.8}
+            accessibilityLabel={`Open ${app.label}`}
+          >
+            <MaterialIcons name="music-note" size={16} color={app.color} />
+            <Text style={{ fontSize: 13, fontWeight: "700", color: colors.foreground }} numberOfLines={1}>
+              {app.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
       <Text style={{ fontSize: 11, color: colors.muted, marginTop: 10, lineHeight: 16 }}>
         Opens your music app. It keeps playing in the background while you train.
