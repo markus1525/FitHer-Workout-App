@@ -22,6 +22,7 @@ export interface UserProfile {
   fitnessLevel: string;
   unitSystem: "metric" | "imperial";
   workoutsMode?: "home" | "gym" | "both";
+  gender?: "female" | "male" | "other";
   profileImage?: string; // local URI for profile picture
 }
 
@@ -177,6 +178,10 @@ export async function getWaterIntake(date: string): Promise<number> {
   const data = await getItem<WaterEntry[]>(KEYS.WATER_INTAKE) || [];
   const entry = data.find((e) => e.date === date);
   return entry?.glasses || 0;
+}
+
+export async function getWaterHistory(): Promise<WaterEntry[]> {
+  return (await getItem<WaterEntry[]>(KEYS.WATER_INTAKE)) || [];
 }
 
 export async function saveWaterIntake(date: string, glasses: number): Promise<void> {

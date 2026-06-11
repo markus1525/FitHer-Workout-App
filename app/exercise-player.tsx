@@ -4,15 +4,18 @@ import { useState, useEffect, useRef } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAudioPlayer } from "expo-audio";
+import { useKeepAwake } from "expo-keep-awake";
 import { ScreenContainer } from "@/components/screen-container";
 import { AppDialog, DialogButton } from "@/components/ui/app-dialog";
 import { YouTubeModal } from "@/components/youtube-modal";
+import { MusicShortcuts } from "@/components/music-shortcuts";
 import { useApp } from "@/lib/app-context";
 import { DEFAULT_WORKOUT_PLANS, EXERCISES, Exercise } from "@/data/exercises";
 import { useColors } from "@/hooks/use-colors";
 import { WorkoutHistoryEntry } from "@/lib/storage";
 
 const beepSource = require("@/assets/sounds/beep.wav");
+const completeSource = require("@/assets/sounds/complete.wav");
 
 export default function ExercisePlayerScreen() {
   const router = useRouter();
@@ -50,8 +53,19 @@ export default function ExercisePlayerScreen() {
   const soundEnabledRef = useRef(true);
   const defaultTimerRef = useRef(0);
   const settingsLoadedRef = useRef(false);
+  const timeLeftRef = useRef(0);
+  const deadlineRef = useRef<number | null>(null);
 
   const beepPlayer = useAudioPlayer(beepSource);
+  const completePlayer = useAudioPlayer(completeSource);
+
+  // Keep the screen on during a workout (native + web Wake Lock where supported)
+  useKeepAwake();
+
+  // Keep a ref of the latest remaining time so the timestamp timer can read it
+  useEffect(() => {
+    timeLeftRef.current = timeLeft;
+  }, [timeLeft]);
 
   const currentExercise = exercises[currentIndex];
 
@@ -154,20 +168,23 @@ export default function ExercisePlayerScreen() {
     }
   };
 
-  // Countdown
+  // Countdown — timestamp based so it stays accurate if the screen sleeps
+  // or the tab is backgrounded (plain setInterval drifts in those cases).
   useEffect(() => {
-    if (isRunning && timeLeft > 0) {
-      intervalRef.current = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 1) {
-            if (intervalRef.current) clearInterval(intervalRef.current);
-            handleTimerEnd();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+    if (!isRunning) {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      return;
     }
+    // Establish the finish time from however much is left right now
+    deadlineRef.current = Date.now() + timeLeftRef.current * 1000;
+    intervalRef.current = setInterval(() => {
+      const remaining = Math.max(0, Math.ceil(((deadlineRef.current ?? Date.now()) - Date.now()) / 1000));
+      setTimeLeft(remaining);
+      if (remaining <= 0) {
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        handleTimerEnd();
+      }
+    }, 250);
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
@@ -191,6 +208,24 @@ export default function ExercisePlayerScreen() {
 
   const clearSession = () => {
     AsyncStorage.removeItem(SESSION_KEY).catch(() => {});
+  };
+
+  const playComplete = () => {
+    if (!soundEnabledRef.current) return;
+    if (Platform.OS !== "web") {
+      try {
+        const Haptics = require("expo-haptics");
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } catch {
+        // haptics optional
+      }
+    }
+    try {
+      completePlayer.seekTo(0);
+      completePlayer.play();
+    } catch {
+      // best effort
+    }
   };
 
   // The exercise timer reached 0. Stop, sound the alarm, and wait for the user.
@@ -218,6 +253,7 @@ export default function ExercisePlayerScreen() {
     setIsRunning(false);
     setIsComplete(true);
     clearSession();
+    playComplete();
     const duration = Math.round((Date.now() - startTimeRef.current) / 60000);
     const totalCalories = exercises.reduce((sum, e) => sum + e.calories, 0);
 
@@ -243,7 +279,10 @@ export default function ExercisePlayerScreen() {
 
   // Adjust the current exercise time on the fly
   const adjustTime = (delta: number) => {
-    setTimeLeft((prev) => Math.min(3600, Math.max(5, prev + delta)));
+    const next = Math.min(3600, Math.max(5, timeLeftRef.current + delta));
+    timeLeftRef.current = next;
+    setTimeLeft(next);
+    if (isRunning) deadlineRef.current = Date.now() + next * 1000;
   };
 
   const skipExercise = () => {
@@ -368,8 +407,13 @@ export default function ExercisePlayerScreen() {
       </View>
 
       {/* Progress Bar */}
-      <View style={{ height: 6, backgroundColor: colors.border, borderRadius: 3, overflow: "hidden", marginBottom: 24 }}>
+      <View style={{ height: 6, backgroundColor: colors.border, borderRadius: 3, overflow: "hidden", marginBottom: 16 }}>
         <View style={{ width: `${progress * 100}%`, backgroundColor: colors.primary, height: "100%", borderRadius: 3 }} />
+      </View>
+
+      {/* Music quick links */}
+      <View style={{ marginBottom: 12 }}>
+        <MusicShortcuts compact />
       </View>
 
       {/* Main Content */}

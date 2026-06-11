@@ -4,6 +4,7 @@ import { useState } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/screen-container";
 import { YouTubeModal } from "@/components/youtube-modal";
+import { MusicShortcuts } from "@/components/music-shortcuts";
 import { useApp } from "@/lib/app-context";
 import { DEFAULT_WORKOUT_PLANS, EXERCISES, WorkoutPlan } from "@/data/exercises";
 import { useColors } from "@/hooks/use-colors";
@@ -92,6 +93,9 @@ export default function WorkoutDetailScreen() {
             ))}
           </View>
         </View>
+
+        {/* Music quick links */}
+        <MusicShortcuts />
 
         {/* Exercise List */}
         <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginBottom: 12 }}>

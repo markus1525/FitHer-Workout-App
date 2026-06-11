@@ -1,15 +1,37 @@
 import { ScrollView, Text, View, TouchableOpacity, TextInput } from "react-native";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/screen-container";
 import { useApp } from "@/lib/app-context";
 import { useColors } from "@/hooks/use-colors";
+import { getWaterHistory, WaterEntry } from "@/lib/storage";
 
 export default function GoalsScreen() {
   const { state, updateGoals } = useApp();
   const colors = useColors();
   const [editingGoal, setEditingGoal] = useState<string | null>(null);
   const [tempValue, setTempValue] = useState("");
+  const [waterHistory, setWaterHistory] = useState<WaterEntry[]>([]);
+
+  useEffect(() => {
+    getWaterHistory().then(setWaterHistory).catch(() => {});
+  }, [state.todayWater]);
+
+  // Days where the water goal was met (used for the Stay Hydrated achievement)
+  const hydratedDays = waterHistory.filter((e) => e.glasses >= (state.goals.dailyWater || 8)).length;
+
+  // Last 7 days of water for the mini chart
+  const last7 = (() => {
+    const days: { label: string; glasses: number }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().split("T")[0];
+      const entry = waterHistory.find((e) => e.date === key);
+      days.push({ label: ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"][d.getDay()], glasses: entry?.glasses || 0 });
+    }
+    return days;
+  })();
 
   const unitSystem = state.profile?.unitSystem || "metric";
 
@@ -52,7 +74,7 @@ export default function GoalsScreen() {
     { id: "ten", icon: "emoji-events", title: "10 Workouts", desc: "Complete 10 workouts", unlocked: state.goals.totalWorkouts >= 10 },
     { id: "fifty", icon: "military-tech", title: "50 Workouts", desc: "Complete 50 workouts", unlocked: state.goals.totalWorkouts >= 50 },
     { id: "calories", icon: "local-fire-department", title: "Calorie Crusher", desc: "Burn 1000+ calories total", unlocked: state.goals.totalCalories >= 1000 },
-    { id: "hydrated", icon: "water-drop", title: "Stay Hydrated", desc: "Hit water goal 7 days", unlocked: false },
+    { id: "hydrated", icon: "water-drop", title: "Stay Hydrated", desc: "Hit water goal 7 days", unlocked: hydratedDays >= 7 },
   ];
 
   return (
@@ -248,6 +270,33 @@ export default function GoalsScreen() {
               </Text>
             </View>
           )}
+        </View>
+
+        {/* Water - last 7 days */}
+        <View style={{ backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 16 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
+            <MaterialIcons name="water-drop" size={20} color="#2196F3" />
+            <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginLeft: 8 }}>Water - Last 7 Days</Text>
+          </View>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", height: 90 }}>
+            {last7.map((d, i) => {
+              const goal = state.goals.dailyWater || 8;
+              const ratio = goal > 0 ? Math.min(d.glasses / goal, 1) : 0;
+              const hitGoal = d.glasses >= goal;
+              return (
+                <View key={i} style={{ flex: 1, alignItems: "center" }}>
+                  <Text style={{ fontSize: 10, color: colors.muted, marginBottom: 4 }}>{d.glasses}</Text>
+                  <View style={{ width: 18, height: 56, backgroundColor: colors.border, borderRadius: 9, overflow: "hidden", justifyContent: "flex-end" }}>
+                    <View style={{ height: `${ratio * 100}%`, backgroundColor: hitGoal ? colors.success : "#2196F3", borderRadius: 9 }} />
+                  </View>
+                  <Text style={{ fontSize: 10, color: colors.muted, marginTop: 4 }}>{d.label}</Text>
+                </View>
+              );
+            })}
+          </View>
+          <Text style={{ fontSize: 11, color: colors.muted, marginTop: 10 }}>
+            Goal {state.goals.dailyWater || 8} glasses a day. Days hitting your goal so far: {hydratedDays}.
+          </Text>
         </View>
 
         {/* Achievements */}

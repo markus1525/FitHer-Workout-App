@@ -40,6 +40,7 @@ export default function BMICalculatorScreen() {
   );
   const [result, setResult] = useState<number | null>(null);
   const [energy, setEnergy] = useState<{ bmr: number; tdee: number; protein: number; carbs: number; fat: number } | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const calculateBMI = () => {
     const w = parseFloat(weight);
@@ -65,6 +66,15 @@ export default function BMICalculatorScreen() {
       finalHeightCm = h;
     }
 
+    // Sanity check so a stray digit does not produce nonsense numbers
+    if (weightKg < 25 || weightKg > 400 || finalHeightCm < 80 || finalHeightCm > 250) {
+      setError("Please enter a realistic height and weight.");
+      setResult(null);
+      setEnergy(null);
+      return;
+    }
+    setError(null);
+
     const rounded = Math.round(bmi * 10) / 10;
     setResult(rounded);
 
@@ -79,7 +89,10 @@ export default function BMICalculatorScreen() {
     // FitHer is built for women, so we use the female BMR formula.
     const age = state.profile?.age || 0;
     if (age > 0) {
-      const bmr = 10 * weightKg + 6.25 * finalHeightCm - 5 * age - 161;
+      const gender = state.profile?.gender || "female";
+      // Mifflin-St Jeor: +5 male, -161 female, average for other/unspecified
+      const sexConstant = gender === "male" ? 5 : gender === "other" ? -78 : -161;
+      const bmr = 10 * weightKg + 6.25 * finalHeightCm - 5 * age + sexConstant;
       const w = state.goals.weeklyWorkouts || 0;
       const mult = w <= 1 ? 1.2 : w <= 3 ? 1.375 : w <= 5 ? 1.55 : 1.725;
       const tdee = bmr * mult;
@@ -226,6 +239,9 @@ export default function BMICalculatorScreen() {
           >
             <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16 }}>Calculate BMI</Text>
           </TouchableOpacity>
+          {error && (
+            <Text style={{ color: "#F44336", fontSize: 13, textAlign: "center", marginTop: 10 }}>{error}</Text>
+          )}
         </View>
 
         {/* Result */}

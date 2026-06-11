@@ -20,12 +20,13 @@ import {
   initialWindowMetrics,
 } from "react-native-safe-area-context";
 import type { EdgeInsets, Metrics, Rect } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   registerServiceWorker,
-  scheduleDailyWorkoutReminder,
-  scheduleDailyWaterReminder,
+  scheduleAllWebReminders,
 } from "@/lib/web-notifications";
 
+import { setAudioModeAsync } from "expo-audio";
 import { trpc, createTRPCClient } from "@/lib/trpc";
 import { initManusRuntime, subscribeSafeAreaInsets } from "@/lib/_core/manus-runtime";
 import { AppProvider } from "@/lib/app-context";
@@ -81,6 +82,17 @@ export default function RootLayout() {
     initManusRuntime();
   }, []);
 
+  // Let the app's own sounds (exercise beep, completion fanfare, motivation
+  // video) mix and duck with the user's music instead of stopping it.
+  useEffect(() => {
+    setAudioModeAsync({
+      playsInSilentMode: true,
+      shouldPlayInBackground: false,
+      interruptionMode: "mixWithOthers",
+      interruptionModeAndroid: "duckOthers",
+    }).catch(() => {});
+  }, []);
+
   const handleSafeAreaUpdate = useCallback((metrics: Metrics) => {
     setInsets(metrics.insets);
     setFrame(metrics.frame);
@@ -106,16 +118,35 @@ export default function RootLayout() {
     window.addEventListener("offline", handleOffline);
     window.addEventListener("online", handleOnline);
 
-    // Schedule daily reminders if permission already granted
+    // Re-arm daily reminders at the user's chosen time if permission is granted
     if (typeof Notification !== "undefined" && Notification.permission === "granted") {
-      scheduleDailyWorkoutReminder(8);   // 8:00 AM
-      scheduleDailyWaterReminder(12);    // 12:00 PM
+      AsyncStorage.getItem("fither_reminder_hour").then((val) => {
+        const hour = val ? parseInt(val) || 8 : 8;
+        scheduleAllWebReminders(hour);
+      });
     }
 
     return () => {
       window.removeEventListener("offline", handleOffline);
       window.removeEventListener("online", handleOnline);
     };
+  }, []);
+
+  // ── Native daily reminders: re-arm on load if enabled ────────────────────
+  useEffect(() => {
+    if (Platform.OS === "web") return;
+    (async () => {
+      try {
+        const enabled = await AsyncStorage.getItem("fither_notifications_enabled");
+        if (enabled !== "true") return;
+        const val = await AsyncStorage.getItem("fither_reminder_hour");
+        const hour = val ? parseInt(val) || 8 : 8;
+        const { scheduleAllNativeReminders } = await import("@/lib/native-notifications");
+        await scheduleAllNativeReminders(hour);
+      } catch {
+        // best effort
+      }
+    })();
   }, []);
 
   const [queryClient] = useState(

@@ -94,6 +94,7 @@ export default function ProfileScreen() {
   };
   const [name, setName] = useState(state.profile?.name || "");
   const [age, setAge] = useState(String(state.profile?.age || ""));
+  const [gender, setGender] = useState<"female" | "male" | "other">((state.profile?.gender as "female" | "male" | "other") || "female");
   // Metric: heightCm string. Imperial: separate ft + in strings.
   const [heightCm, setHeightCm] = useState(String(state.profile?.height || ""));
   const [heightFt, setHeightFt] = useState("");
@@ -104,6 +105,7 @@ export default function ProfileScreen() {
   const [videoEnabled, setVideoEnabled] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [defaultTimer, setDefaultTimer] = useState(0); // 0 = use the plan's own timing
+  const [reminderHour, setReminderHour] = useState(8); // 24h hour for daily reminders
   const [showImportModal, setShowImportModal] = useState(false);
   const [importText, setImportText] = useState("");
   const [importing, setImporting] = useState(false);
@@ -135,7 +137,43 @@ export default function ProfileScreen() {
     AsyncStorage.getItem("fither_default_timer").then((val) => {
       setDefaultTimer(val ? parseInt(val) || 0 : 0);
     });
+    AsyncStorage.getItem("fither_reminder_hour").then((val) => {
+      if (val !== null) setReminderHour(parseInt(val) || 8);
+    });
   }, []);
+
+  // Friendly label like "7:00 AM" for a 24h hour
+  const formatHour = (h: number) => {
+    const period = h >= 12 ? "PM" : "AM";
+    const display = h % 12 === 0 ? 12 : h % 12;
+    return `${display}:00 ${period}`;
+  };
+
+  // Reschedule all daily reminders at the current hour (only if enabled)
+  const rescheduleReminders = async (hour: number) => {
+    try {
+      if (Platform.OS === "web") {
+        if (typeof window === "undefined" || !("Notification" in window) || Notification.permission !== "granted") return;
+        const { scheduleAllWebReminders } = await import("@/lib/web-notifications");
+        await scheduleAllWebReminders(hour);
+      } else {
+        const enabled = await AsyncStorage.getItem("fither_notifications_enabled");
+        if (enabled !== "true") return;
+        const { scheduleAllNativeReminders } = await import("@/lib/native-notifications");
+        await scheduleAllNativeReminders(hour);
+      }
+    } catch {
+      // best effort
+    }
+  };
+
+  const REMINDER_HOURS = [6, 7, 8, 9, 12, 17, 18, 19, 20];
+  const cycleReminderTime = async () => {
+    const next = REMINDER_HOURS[(REMINDER_HOURS.indexOf(reminderHour) + 1) % REMINDER_HOURS.length];
+    setReminderHour(next);
+    await AsyncStorage.setItem("fither_reminder_hour", String(next));
+    await rescheduleReminders(next);
+  };
 
   const handleToggleNotif = async (val: boolean) => {
     if (Platform.OS === "web") {
@@ -168,10 +206,9 @@ export default function ProfileScreen() {
         setNotifEnabled(isGranted);
         await AsyncStorage.setItem("fither_notifications_enabled", isGranted ? "true" : "false");
         if (isGranted) {
-          // Schedule daily reminders via service worker
-          const { scheduleDailyWorkoutReminder, scheduleDailyWaterReminder } = await import("@/lib/web-notifications");
-          await scheduleDailyWorkoutReminder(8);
-          await scheduleDailyWaterReminder(12);
+          // Schedule daily workout, motivation, and water reminders via service worker
+          const { scheduleAllWebReminders } = await import("@/lib/web-notifications");
+          await scheduleAllWebReminders(reminderHour);
         } else {
           showDialog("Notifications Blocked", "You can enable them in your browser's site settings.", [
             { label: "OK", onPress: dismissDialog },
@@ -200,7 +237,10 @@ export default function ProfileScreen() {
         const isGranted = status === "granted";
         setNotifEnabled(isGranted);
         await AsyncStorage.setItem("fither_notifications_enabled", isGranted ? "true" : "false");
-        if (!isGranted) {
+        if (isGranted) {
+          const { scheduleAllNativeReminders } = await import("@/lib/native-notifications");
+          await scheduleAllNativeReminders(reminderHour);
+        } else {
           showDialog(
             "Enable Notifications",
             "Notifications are disabled. Enable them in your device Settings to receive workout reminders.",
@@ -259,6 +299,7 @@ export default function ProfileScreen() {
       fitnessGoal: state.profile?.fitnessGoal || "stay_active",
       fitnessLevel: state.profile?.fitnessLevel || "beginner",
       unitSystem: unitSystem,
+      gender,
       profileImage: state.profile?.profileImage,
     });
     setEditing(false);
@@ -519,6 +560,7 @@ export default function ProfileScreen() {
                   setEditing(true);
                   setName(state.profile?.name || "");
                   setAge(String(state.profile?.age || ""));
+                  setGender((state.profile?.gender as "female" | "male" | "other") || "female");
                   const h = state.profile?.height || 165;
                   const w = state.profile?.weight || 60;
                   if (unitSystem === "imperial") {
@@ -690,6 +732,31 @@ export default function ProfileScreen() {
                     placeholderTextColor={colors.muted}
                     returnKeyType="done"
                   />
+                </View>
+              </View>
+              <View style={{ marginBottom: 12 }}>
+                <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 4 }}>Gender (used for calorie estimates)</Text>
+                <View style={{ flexDirection: "row", gap: 8 }}>
+                  {(["female", "male", "other"] as const).map((g) => (
+                    <TouchableOpacity
+                      key={g}
+                      onPress={() => setGender(g)}
+                      style={{
+                        flex: 1,
+                        paddingVertical: 10,
+                        borderRadius: 12,
+                        alignItems: "center",
+                        backgroundColor: gender === g ? colors.primary : colors.background,
+                        borderWidth: gender === g ? 0 : 1,
+                        borderColor: colors.border,
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={{ fontSize: 13, fontWeight: "600", color: gender === g ? "#FFF" : colors.foreground, textTransform: "capitalize" }}>
+                        {g}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
               </View>
               <View style={{ flexDirection: "row", gap: 10 }}>
@@ -962,9 +1029,28 @@ export default function ProfileScreen() {
               />
             </View>
             <Text style={{ fontSize: 11, color: colors.muted, marginTop: 6, lineHeight: 16, paddingLeft: 32 }}>
-              Notifications will remind you about daily workouts and water intake. Enable them in your device settings for the best experience.
+              Daily reminders for your workout, a motivation message, and water. Enable them in your device settings for the best experience.
             </Text>
           </View>
+
+          {/* Reminder Time */}
+          <TouchableOpacity
+            onPress={cycleReminderTime}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              padding: 16,
+              borderBottomWidth: 1,
+              borderBottomColor: colors.border,
+            }}
+            activeOpacity={0.7}
+          >
+            <MaterialIcons name="schedule" size={20} color={colors.primary} />
+            <Text style={{ fontSize: 14, color: colors.foreground, marginLeft: 12, flex: 1 }}>
+              Reminder Time: {formatHour(reminderHour)}
+            </Text>
+            <MaterialIcons name="swap-horiz" size={20} color={colors.muted} />
+          </TouchableOpacity>
 
           {/* Startup Motivation Video */}
           <View

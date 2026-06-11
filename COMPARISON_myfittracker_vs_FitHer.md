@@ -297,6 +297,31 @@ These are all JavaScript and TypeScript changes (no new native modules), so the 
 
 ---
 
+## 15. Implementation status - third batch (done)
+
+Music, sounds, and the wider polish round.
+
+- New sounds. Replaced the flat beep with a brighter three-note exercise-end alarm (`assets/sounds/beep.wav`) and added a triumphant fanfare on the Workout Complete screen (`assets/sounds/complete.wav`), both played through expo-audio in `app/exercise-player.tsx`.
+- Music shortcuts, Spotify first. New `components/music-shortcuts.tsx` opens Spotify, Apple Music, or YouTube Music. Full version on the workout detail screen, compact version inside the player. On web it opens the music site, on native it opens the app and falls back to the web link.
+- Music does not get cut off. `app/_layout.tsx` calls `setAudioModeAsync` with mix and duck settings, so the app's own sounds and the motivation video lower the user's music briefly instead of stopping it.
+- Keep the screen awake during a workout, using `useKeepAwake` in the player (native and web Wake Lock).
+- Drift-proof timer. The player countdown is now based on a target timestamp, so it stays accurate if the screen sleeps or the tab is backgrounded.
+- Gender field and accurate BMR. Added gender to the profile (`lib/storage.ts`, `app/(tabs)/profile.tsx`) and used it in the BMR formula in `app/bmi-calculator.tsx`, so the calorie and macro numbers are correct for everyone, not just the female default.
+- Input validation. The BMI calculator rejects unrealistic height or weight and shows a clear message.
+- Hydration achievement and water history. The Stay Hydrated badge now unlocks for real, and the Goals tab shows a last 7 days water chart (`app/(tabs)/goals.tsx`, plus a `getWaterHistory` helper in `lib/storage.ts`).
+- Auto daily notifications. Daily workout, motivation, and water reminders. Web uses the service worker (`lib/web-notifications.ts`), native uses expo-notifications daily triggers (`lib/native-notifications.ts`). A Reminder Time setting in Profile lets the user pick the hour, and reminders re-arm on app load.
+
+Deferred on purpose (with reasons):
+- Crash reporting and analytics (Sentry) need your own account and a DSN plus native setup, so they are best added as a separate focused step.
+- Cloud sync is the large one and the only item that could cost money later, so it is left for a dedicated effort.
+- Automated tests were not added because the runner cannot start in this environment. The whole batch was verified with `tsc --noEmit`, which is clean.
+
+Build and deploy notes for this batch:
+- Native sounds, keep-awake, audio ducking, and native notifications use native modules, so the APK needs a fresh EAS build to get them. expo-notifications may also need its config plugin in `app.config.ts` for the most reliable Android delivery, which is a rebuild-time decision.
+- Everything works on web after `pnpm export` and `pnpm run deploy` (note: use `pnpm run deploy`, since plain `pnpm deploy` is a built-in pnpm command).
+
+---
+
 ### Bottom line
 
 myfittracker is stronger on the daily training experience (today's session, ticking, per day editing, working streak, and the BMI plus calorie dashboard). FitHer is stronger as a real, scalable app with onboarding, cycle tracking, and a follow along player. The best move is to keep FitHer's structure and bring over myfittracker's four daily strengths in this order: show today's session on Home, fix the streak, show history, then add per exercise ticking and the BMI dashboard.
