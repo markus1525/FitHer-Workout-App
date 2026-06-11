@@ -9,6 +9,23 @@ interface YouTubeModalProps {
   onClose: () => void;
 }
 
+/**
+ * Open a YouTube search for an exercise. Used when an exercise has no specific
+ * video id, so the tutorial shown is always a real, current result.
+ */
+export function openYouTubeSearch(query: string) {
+  const q = encodeURIComponent(`${query} exercise tutorial`);
+  const webUrl = `https://www.youtube.com/results?search_query=${q}`;
+  if (Platform.OS === "web") {
+    if (typeof window !== "undefined") window.open(webUrl, "_blank");
+    return;
+  }
+  const appUrl = `youtube://results?search_query=${q}`;
+  Linking.canOpenURL(appUrl)
+    .then((supported) => (supported ? Linking.openURL(appUrl) : Linking.openURL(webUrl)))
+    .catch(() => Linking.openURL(webUrl).catch(() => {}));
+}
+
 function openInYouTube(videoId: string) {
   const appUrl = `youtube://watch?v=${videoId}`;
   const webUrl = `https://www.youtube.com/watch?v=${videoId}`;

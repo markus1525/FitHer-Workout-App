@@ -15,15 +15,32 @@ const MUSIC_APPS: MusicApp[] = [
   { key: "spotify", label: "Spotify", color: "#1DB954", appUrl: "spotify://", webUrl: "https://open.spotify.com/search/workout" },
   { key: "apple", label: "Apple Music", color: "#FA243C", appUrl: "music://", webUrl: "https://music.apple.com/us/search?term=workout" },
   { key: "ytmusic", label: "YouTube Music", color: "#FF0000", appUrl: "https://music.youtube.com/search?q=workout", webUrl: "https://music.youtube.com/search?q=workout" },
-  // Flow Myanmar: the https link opens the Flow app if installed, otherwise the site.
   { key: "flow", label: "Flow", color: "#8B2FC9", appUrl: "https://www.flow.com.mm/", webUrl: "https://www.flow.com.mm/" },
 ];
+
+const FLOW_ANDROID_PACKAGE = "com.legacymusicnetwork.flow";
+const FLOW_PLAY_STORE = `https://play.google.com/store/apps/details?id=${FLOW_ANDROID_PACKAGE}`;
+const FLOW_APP_STORE = "https://apps.apple.com/my/app/flow-music-for-myanmar/id6451472259";
 
 function openMusic(app: MusicApp) {
   if (Platform.OS === "web") {
     if (typeof window !== "undefined") window.open(app.webUrl, "_blank");
     return;
   }
+
+  // Flow has no public URL scheme, so open it by package on Android (falls back
+  // to the Play Store), or the App Store on iOS.
+  if (app.key === "flow") {
+    if (Platform.OS === "android") {
+      Linking.openURL(`intent://#Intent;package=${FLOW_ANDROID_PACKAGE};end`).catch(() => {
+        Linking.openURL(FLOW_PLAY_STORE).catch(() => {});
+      });
+    } else {
+      Linking.openURL(FLOW_APP_STORE).catch(() => {});
+    }
+    return;
+  }
+
   Linking.canOpenURL(app.appUrl)
     .then((supported) => (supported ? Linking.openURL(app.appUrl) : Linking.openURL(app.webUrl)))
     .catch(() => Linking.openURL(app.webUrl).catch(() => {}));

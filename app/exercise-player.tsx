@@ -7,7 +7,7 @@ import { useAudioPlayer } from "expo-audio";
 import { useKeepAwake } from "expo-keep-awake";
 import { ScreenContainer } from "@/components/screen-container";
 import { AppDialog, DialogButton } from "@/components/ui/app-dialog";
-import { YouTubeModal } from "@/components/youtube-modal";
+import { YouTubeModal, openYouTubeSearch } from "@/components/youtube-modal";
 import { MusicShortcuts } from "@/components/music-shortcuts";
 import { useApp } from "@/lib/app-context";
 import { DEFAULT_WORKOUT_PLANS, EXERCISES, Exercise, getPlanSequence } from "@/data/exercises";
@@ -498,7 +498,7 @@ export default function ExercisePlayerScreen() {
         {/* Watch Preview Button - opens in-app modal */}
         {!finished && currentExercise && (
           <TouchableOpacity
-            onPress={() => openVideoPreview(currentExercise.youtubeId, currentExercise.name)}
+            onPress={() => (currentExercise.youtubeId ? openVideoPreview(currentExercise.youtubeId, currentExercise.name) : openYouTubeSearch(currentExercise.name))}
             style={{
               flexDirection: "row",
               alignItems: "center",

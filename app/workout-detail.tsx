@@ -3,7 +3,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/screen-container";
-import { YouTubeModal } from "@/components/youtube-modal";
+import { YouTubeModal, openYouTubeSearch } from "@/components/youtube-modal";
 import { MusicShortcuts } from "@/components/music-shortcuts";
 import { useApp } from "@/lib/app-context";
 import { DEFAULT_WORKOUT_PLANS, EXERCISES, WorkoutPlan, Exercise, getPlanPhases } from "@/data/exercises";
@@ -75,7 +75,7 @@ export default function WorkoutDetailScreen() {
             </Text>
           </View>
           <TouchableOpacity
-            onPress={() => openVideoPreview(exercise.youtubeId, exercise.name)}
+            onPress={() => (exercise.youtubeId ? openVideoPreview(exercise.youtubeId, exercise.name) : openYouTubeSearch(exercise.name))}
             style={{ backgroundColor: "#FF0000", borderRadius: 18, width: 36, height: 36, alignItems: "center", justifyContent: "center" }}
             activeOpacity={0.7}
           >

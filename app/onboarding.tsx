@@ -1,4 +1,4 @@
-import { Text, View, TouchableOpacity, TextInput, ScrollView, Linking } from "react-native";
+import { Text, View, TouchableOpacity, TextInput, ScrollView, Linking, Platform } from "react-native";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -81,6 +81,38 @@ export default function OnboardingScreen() {
     );
   }
 
+  // Ask for the permissions FitHer needs (notifications) on first setup, then
+  // turn on the daily reminders if granted.
+  const requestInitialPermissions = async () => {
+    try {
+      if (Platform.OS === "web") {
+        if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
+          const perm = await Notification.requestPermission();
+          if (perm === "granted") {
+            await AsyncStorage.setItem("fither_notifications_enabled", "true");
+            const { scheduleAllWebReminders } = await import("@/lib/web-notifications");
+            await scheduleAllWebReminders(8);
+          }
+        }
+      } else {
+        const Notifications = require("expo-notifications");
+        const { status: existing } = await Notifications.getPermissionsAsync();
+        let status = existing;
+        if (existing !== "granted") {
+          const res = await Notifications.requestPermissionsAsync();
+          status = res.status;
+        }
+        if (status === "granted") {
+          await AsyncStorage.setItem("fither_notifications_enabled", "true");
+          const { scheduleAllNativeReminders } = await import("@/lib/native-notifications");
+          await scheduleAllNativeReminders(8);
+        }
+      }
+    } catch {
+      // permissions are optional, never block onboarding
+    }
+  };
+
   const handleComplete = async () => {
     const rawWeight = parseFloat(weight);
     let finalHeightCm: number;
@@ -132,6 +164,7 @@ export default function OnboardingScreen() {
     await updateGoals({ ...state.goals, weeklyWorkouts: workoutDays || state.goals.weeklyWorkouts });
 
     await completeOnboarding();
+    await requestInitialPermissions();
 
     if (!shouldShowVideo) {
       router.replace("/(tabs)");

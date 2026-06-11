@@ -562,4 +562,126 @@ export const EXERCISE_COACHING: Record<string, ExerciseCoaching> = {
     ],
     commonMistakes: ["Letting the bent knee cave in", "Rounding the back", "Heel of the straight leg lifting"],
   },
+
+  // ── Added exercises ───────────────────────────────────────────────────────
+  "incline-push-ups": {
+    targetMuscles: ["Chest", "Triceps", "Shoulders", "Core"],
+    formTips: [
+      "Place your hands on a sturdy raised surface, wider than your shoulders.",
+      "Keep a straight line from head to heels.",
+      "Lower your chest toward the surface, elbows about 45 degrees.",
+      "Press back up and breathe out at the top.",
+    ],
+    commonMistakes: ["Hips sagging", "Elbows flaring straight out", "Using an unstable surface"],
+  },
+  "reverse-lunges": {
+    targetMuscles: ["Quads", "Glutes", "Hamstrings", "Balance"],
+    formTips: [
+      "Stand tall, then step one foot back.",
+      "Lower until both knees are about 90 degrees.",
+      "Keep your front knee over your ankle.",
+      "Push through the front heel to return to standing.",
+    ],
+    commonMistakes: ["Front knee caving inward", "Leaning forward", "Short, shallow steps"],
+  },
+  "curtsy-lunges": {
+    targetMuscles: ["Glutes", "Quads", "Inner Thighs"],
+    formTips: [
+      "Step one leg diagonally behind the other, like a curtsy.",
+      "Bend both knees to lower down.",
+      "Keep your hips facing forward and chest tall.",
+      "Push through the front heel to stand and switch sides.",
+    ],
+    commonMistakes: ["Twisting the hips", "Front knee past the toes", "Losing balance by rushing"],
+  },
+  "step-ups": {
+    targetMuscles: ["Quads", "Glutes", "Hamstrings", "Balance"],
+    formTips: [
+      "Stand facing a sturdy chair or bench.",
+      "Place one full foot on top and drive through that heel.",
+      "Stand all the way up, then step down with control.",
+      "Alternate the leading leg.",
+    ],
+    commonMistakes: ["Pushing off the back foot", "Knee caving inward", "Using a wobbly surface"],
+  },
+  "calf-raises": {
+    targetMuscles: ["Calves"],
+    formTips: [
+      "Stand tall, feet hip-width, holding support if needed.",
+      "Rise up onto the balls of your feet.",
+      "Squeeze your calves at the top.",
+      "Lower slowly all the way down.",
+    ],
+    commonMistakes: ["Bouncing", "Partial range of motion", "Rolling onto the outer edges of the feet"],
+  },
+  "superman": {
+    targetMuscles: ["Lower Back", "Glutes", "Core"],
+    formTips: [
+      "Lie face down with arms extended in front.",
+      "Lift your arms, chest, and legs off the floor.",
+      "Squeeze your back and glutes at the top.",
+      "Lower slowly with control.",
+    ],
+    commonMistakes: ["Yanking the neck up", "Lifting too fast", "Holding your breath"],
+  },
+  "side-plank": {
+    targetMuscles: ["Obliques", "Core", "Shoulders"],
+    formTips: [
+      "Lie on your side, elbow under your shoulder.",
+      "Stack your feet and lift your hips off the floor.",
+      "Form a straight line from head to feet.",
+      "Hold and breathe, then switch sides.",
+    ],
+    commonMistakes: ["Hips sagging", "Leaning forward or back", "Holding your breath"],
+  },
+  "dead-bug": {
+    targetMuscles: ["Deep Core", "Lower Back Stability"],
+    formTips: [
+      "Lie on your back, arms up and knees bent over your hips.",
+      "Press your lower back into the floor and keep it there.",
+      "Lower the opposite arm and leg together slowly.",
+      "Return and switch sides.",
+    ],
+    commonMistakes: ["Lower back arching off the floor", "Moving too fast", "Holding your breath"],
+  },
+  "flutter-kicks": {
+    targetMuscles: ["Lower Abs", "Hip Flexors"],
+    formTips: [
+      "Lie on your back, hands under your lower back.",
+      "Lift your legs a few inches off the floor.",
+      "Make small, quick up-and-down kicks.",
+      "Keep your lower back pressed down throughout.",
+    ],
+    commonMistakes: ["Lower back lifting off the floor", "Kicking too high", "Holding your breath"],
+  },
+  "plank-jacks": {
+    targetMuscles: ["Core", "Shoulders", "Cardio"],
+    formTips: [
+      "Start in a forearm or high plank, core braced.",
+      "Jump your feet out wide, then back together.",
+      "Keep your hips level and stable.",
+      "Move at a steady, controlled pace.",
+    ],
+    commonMistakes: ["Hips bouncing up and down", "Sagging hips", "Going too fast and losing form"],
+  },
+  "bodyweight-hip-thrust": {
+    targetMuscles: ["Glutes", "Hamstrings"],
+    formTips: [
+      "Rest your upper back on a couch or bench, feet flat.",
+      "Drive your hips up by squeezing your glutes.",
+      "Form a straight line from knees to shoulders at the top.",
+      "Lower slowly and repeat.",
+    ],
+    commonMistakes: ["Arching the lower back", "Feet too far forward", "Not pausing at the top"],
+  },
+  "jumping-lunges": {
+    targetMuscles: ["Quads", "Glutes", "Calves", "Cardio"],
+    formTips: [
+      "Start in a lunge position.",
+      "Jump up and switch your legs in mid-air.",
+      "Land softly into the opposite lunge, knees bent.",
+      "Keep your chest tall throughout.",
+    ],
+    commonMistakes: ["Landing with stiff legs", "Front knee caving in", "Leaning too far forward"],
+  },
 };
