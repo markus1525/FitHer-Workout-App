@@ -338,7 +338,7 @@ Verified with `tsc --noEmit` (clean) and a check that every plan id the generato
 
 ## 17. Implementation status - fifth batch
 
-- Flow opens the app, not the website. On Android the Flow button now launches the Flow app by package (`com.legacymusicnetwork.flow`) and falls back to the Play Store if it is not installed. On iOS it opens the App Store page (Flow exposes no public URL scheme, so the app cannot be launched directly there). Web still opens the Flow site. The other three apps are unchanged.
+- Flow opens the app, not the website. The Flow button now opens `https://www.flowmyanmar.com/login`, which is set up as an app link. On a phone with Flow installed this hands straight to the app (or shows the site's own "Open in the Flow app" button). The other three apps are unchanged.
 - Permissions requested on first setup. At the end of onboarding the app now asks for notification permission automatically (web and native) and, if granted, turns on the daily reminders. No need to dig into settings first.
 - More exercises and plans. Added 12 exercises (incline push-ups, reverse and curtsy lunges, step-ups, calf raises, superman, side plank, dead bug, flutter kicks, plank jacks, bodyweight hip thrust, jumping lunges), each with full coaching detail, plus 3 plans (Lower Body Burn, Abs Express, Booty Builder).
 - Correct tutorials for new moves. Rather than guess video ids that could be wrong, the new exercises open a live YouTube search for the exact exercise name, so the tutorial is always real and current. Existing exercises keep their specific videos. You can pin specific video ids later if you want.
