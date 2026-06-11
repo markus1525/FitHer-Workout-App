@@ -48,6 +48,7 @@ export interface GoalsData {
   totalWorkouts: number;
   totalCalories: number;
   totalMinutes: number;
+  lastWorkoutDate?: string; // YYYY-MM-DD of the most recent logged workout
 }
 
 export interface CycleEntry {

@@ -39,6 +39,7 @@ export default function BMICalculatorScreen() {
       : ""
   );
   const [result, setResult] = useState<number | null>(null);
+  const [energy, setEnergy] = useState<{ bmr: number; tdee: number; protein: number; carbs: number; fat: number } | null>(null);
 
   const calculateBMI = () => {
     const w = parseFloat(weight);
@@ -73,6 +74,25 @@ export default function BMICalculatorScreen() {
       weight: Math.round(weightKg * 10) / 10,
       height: Math.round(finalHeightCm * 10) / 10,
     });
+
+    // Daily energy and macros (needs age from profile).
+    // FitHer is built for women, so we use the female BMR formula.
+    const age = state.profile?.age || 0;
+    if (age > 0) {
+      const bmr = 10 * weightKg + 6.25 * finalHeightCm - 5 * age - 161;
+      const w = state.goals.weeklyWorkouts || 0;
+      const mult = w <= 1 ? 1.2 : w <= 3 ? 1.375 : w <= 5 ? 1.55 : 1.725;
+      const tdee = bmr * mult;
+      setEnergy({
+        bmr: Math.round(bmr),
+        tdee: Math.round(tdee),
+        protein: Math.round((tdee * 0.3) / 4),
+        carbs: Math.round((tdee * 0.4) / 4),
+        fat: Math.round((tdee * 0.3) / 9),
+      });
+    } else {
+      setEnergy(null);
+    }
   };
 
   const category = result ? getBMICategory(result) : null;
@@ -233,6 +253,56 @@ export default function BMICalculatorScreen() {
                 <Text style={{ fontSize: 10, color: colors.muted }}>Obese</Text>
               </View>
             </View>
+          </View>
+        )}
+
+        {/* Daily Energy & Macros */}
+        {energy && (
+          <View style={{ backgroundColor: colors.surface, borderRadius: 16, padding: 20, marginBottom: 16 }}>
+            <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 4 }}>Daily Energy & Macros</Text>
+            <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 16 }}>
+              Estimated from your age, body metrics, and weekly workout goal.
+            </Text>
+
+            <View style={{ flexDirection: "row", gap: 12, marginBottom: 16 }}>
+              <View style={{ flex: 1, alignItems: "center" }}>
+                <Text style={{ fontSize: 12, color: colors.muted }}>BMR</Text>
+                <Text style={{ fontSize: 22, fontWeight: "700", color: colors.foreground, marginTop: 2 }}>{energy.bmr}</Text>
+                <Text style={{ fontSize: 11, color: colors.muted }}>cal at rest</Text>
+              </View>
+              <View style={{ width: 1, backgroundColor: colors.border }} />
+              <View style={{ flex: 1, alignItems: "center" }}>
+                <Text style={{ fontSize: 12, color: colors.muted }}>TDEE</Text>
+                <Text style={{ fontSize: 22, fontWeight: "700", color: colors.primary, marginTop: 2 }}>{energy.tdee}</Text>
+                <Text style={{ fontSize: 11, color: colors.muted }}>cal/day</Text>
+              </View>
+            </View>
+
+            <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 8 }}>Suggested daily macros</Text>
+            <View style={{ flexDirection: "row", gap: 10 }}>
+              {[
+                { label: "Protein", value: energy.protein, color: "#F44336" },
+                { label: "Carbs", value: energy.carbs, color: "#FF9800" },
+                { label: "Fat", value: energy.fat, color: "#9C27B0" },
+              ].map((m) => (
+                <View key={m.label} style={{ flex: 1, backgroundColor: m.color + "15", borderRadius: 12, paddingVertical: 12, alignItems: "center" }}>
+                  <Text style={{ fontSize: 11, fontWeight: "700", color: m.color }}>{m.label.toUpperCase()}</Text>
+                  <Text style={{ fontSize: 18, fontWeight: "700", color: colors.foreground, marginTop: 2 }}>{m.value}g</Text>
+                </View>
+              ))}
+            </View>
+
+            <Text style={{ fontSize: 11, color: colors.muted, marginTop: 12, lineHeight: 16 }}>
+              These are general estimates, not medical advice. For fat loss, eat a little below TDEE. To build strength, eat at or slightly above it.
+            </Text>
+          </View>
+        )}
+
+        {!energy && result !== null && (
+          <View style={{ backgroundColor: colors.surface + "80", borderRadius: 16, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: colors.border, borderStyle: "dashed" }}>
+            <Text style={{ fontSize: 13, color: colors.muted, textAlign: "center" }}>
+              Add your age in Profile to also see daily calories (BMR, TDEE) and macros.
+            </Text>
           </View>
         )}
 

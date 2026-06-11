@@ -11,6 +11,10 @@ export interface Exercise {
   youtubeId: string;
   image: string;
   mode?: "home" | "gym" | "both";
+  // Optional coaching detail, shown on the workout detail screen when present.
+  targetMuscles?: string[];
+  formTips?: string[];
+  commonMistakes?: string[];
 }
 
 export interface WorkoutPlan {
@@ -76,6 +80,19 @@ export const EXERCISES: Exercise[] = [
     difficulty: "beginner",
     youtubeId: "aclHkVaku9U",
     image: "🦵",
+    targetMuscles: ["Quads", "Glutes", "Hamstrings", "Core"],
+    formTips: [
+      "Feet shoulder-width apart, toes slightly turned out.",
+      "Push your hips back first, then bend your knees.",
+      "Keep your chest up and back flat all the way down.",
+      "Lower until thighs are about parallel to the floor.",
+      "Drive through your heels to stand back up.",
+    ],
+    commonMistakes: [
+      "Knees caving inward — push them out over your toes.",
+      "Heels lifting off the floor.",
+      "Rounding the lower back.",
+    ],
   },
   {
     id: "lunges",
@@ -89,6 +106,19 @@ export const EXERCISES: Exercise[] = [
     difficulty: "beginner",
     youtubeId: "B7VQJiVv3xw",
     image: "🦵",
+    targetMuscles: ["Quads", "Glutes", "Hamstrings", "Balance"],
+    formTips: [
+      "Stand tall, then take one long step forward.",
+      "Lower until both knees are about 90 degrees.",
+      "Keep your front knee over your ankle, not past your toes.",
+      "Push through the front heel to return to standing.",
+      "Keep your torso upright the whole time.",
+    ],
+    commonMistakes: [
+      "Front knee travelling past the toes.",
+      "Leaning the upper body too far forward.",
+      "Back knee slamming into the floor.",
+    ],
   },
   {
     id: "glute-bridges",
@@ -102,6 +132,19 @@ export const EXERCISES: Exercise[] = [
     difficulty: "beginner",
     youtubeId: "OUgsJ8-Vi0E",
     image: "🍑",
+    targetMuscles: ["Glutes", "Hamstrings", "Lower Back"],
+    formTips: [
+      "Lie on your back, knees bent, feet flat and hip-width apart.",
+      "Press through your heels and squeeze your glutes.",
+      "Lift hips until your body is straight from knee to shoulder.",
+      "Hold for a second at the top.",
+      "Lower slowly, stopping just before your hips touch the floor.",
+    ],
+    commonMistakes: [
+      "Arching the lower back instead of using the glutes.",
+      "Feet too far away — keeps tension off the glutes.",
+      "Rushing the movement.",
+    ],
   },
   {
     id: "donkey-kicks",
@@ -179,6 +222,18 @@ export const EXERCISES: Exercise[] = [
     difficulty: "beginner",
     youtubeId: "jWxvty2KROs",
     image: "💪",
+    targetMuscles: ["Chest", "Triceps", "Shoulders", "Core"],
+    formTips: [
+      "Knees on the floor, hands slightly wider than your shoulders.",
+      "Keep a straight line from head to knees.",
+      "Lower your chest toward the floor with elbows about 45 degrees.",
+      "Push back up and breathe out on the way up.",
+    ],
+    commonMistakes: [
+      "Hips sagging or pushing up too high.",
+      "Elbows flaring straight out to the sides.",
+      "Not lowering far enough.",
+    ],
   },
   {
     id: "tricep-dips",
@@ -243,6 +298,19 @@ export const EXERCISES: Exercise[] = [
     difficulty: "beginner",
     youtubeId: "ASdvN_XEl_c",
     image: "🎯",
+    targetMuscles: ["Core", "Abs", "Lower Back", "Shoulders"],
+    formTips: [
+      "Elbows directly under your shoulders, forearms on the floor.",
+      "Keep a straight line from head to heels.",
+      "Squeeze your core and glutes the whole time.",
+      "Look at the floor to keep your neck neutral.",
+      "Breathe normally and hold.",
+    ],
+    commonMistakes: [
+      "Hips too high — it becomes a rest position.",
+      "Hips sagging, which strains the lower back.",
+      "Holding your breath.",
+    ],
   },
   {
     id: "bicycle-crunches",

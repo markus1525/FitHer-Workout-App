@@ -126,6 +126,7 @@ interface AppContextType {
   updateCycleData: (data: CycleEntry[]) => Promise<void>;
   addBMI: (entry: BMIEntry) => Promise<void>;
   updateCustomPlans: (plans: WorkoutPlan[]) => Promise<void>;
+  deleteCustomPlan: (planId: string) => Promise<void>;
   completeOnboarding: () => Promise<void>;
   addWater: () => Promise<void>;
   removeWater: () => Promise<void>;
@@ -155,6 +156,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         getWaterIntake(today),
         getFavoritePlans(),
       ]);
+
+      // If the last workout was before yesterday, the streak is broken.
+      // Reset it on load so a missed day shows 0 even before the next workout.
+      const yesterday = (() => {
+        const d = new Date(today + "T00:00:00");
+        d.setDate(d.getDate() - 1);
+        return d.toISOString().split("T")[0];
+      })();
+      if (
+        goals.lastWorkoutDate &&
+        goals.lastWorkoutDate !== today &&
+        goals.lastWorkoutDate !== yesterday &&
+        (goals.currentStreak || 0) !== 0
+      ) {
+        goals.currentStreak = 0;
+        await saveGoals(goals);
+      }
 
       dispatch({ type: "SET_ONBOARDING", payload: onboarded });
       dispatch({ type: "SET_PROFILE", payload: profile });
@@ -201,6 +219,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     goals.totalWorkouts += 1;
     goals.totalCalories += entry.caloriesBurned;
     goals.totalMinutes += entry.duration;
+
+    // Update streak based on the workout date (YYYY-MM-DD)
+    const workoutDate = entry.date;
+    const yesterday = (() => {
+      const d = new Date(workoutDate + "T00:00:00");
+      d.setDate(d.getDate() - 1);
+      return d.toISOString().split("T")[0];
+    })();
+    const last = goals.lastWorkoutDate;
+    if (last === workoutDate) {
+      // Already worked out today, keep the streak but never leave it at 0
+      goals.currentStreak = Math.max(goals.currentStreak || 0, 1);
+    } else if (last === yesterday) {
+      goals.currentStreak = (goals.currentStreak || 0) + 1;
+    } else {
+      goals.currentStreak = 1;
+    }
+    goals.lastWorkoutDate = workoutDate;
+    if (goals.currentStreak > (goals.longestStreak || 0)) {
+      goals.longestStreak = goals.currentStreak;
+    }
+
     await saveGoals(goals);
     dispatch({ type: "SET_GOALS", payload: goals });
   };
@@ -219,6 +259,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const updateCustomPlans = async (plans: WorkoutPlan[]) => {
     await saveCustomPlans(plans);
     dispatch({ type: "SET_CUSTOM_PLANS", payload: plans as WorkoutPlan[] });
+  };
+
+  const deleteCustomPlan = async (planId: string) => {
+    const remaining = state.customPlans.filter((p) => p.id !== planId);
+    await saveCustomPlans(remaining);
+    dispatch({ type: "SET_CUSTOM_PLANS", payload: remaining as WorkoutPlan[] });
+
+    // Clear this plan from any weekday it was assigned to
+    const usedInSchedule = Object.values(state.schedule).some((d) => d?.planId === planId);
+    if (usedInSchedule) {
+      const newSchedule: WorkoutSchedule = { ...state.schedule };
+      for (const key of Object.keys(newSchedule)) {
+        const idx = Number(key);
+        if (newSchedule[idx]?.planId === planId) {
+          newSchedule[idx] = { ...newSchedule[idx], planId: undefined };
+        }
+      }
+      await saveWorkoutSchedule(newSchedule);
+      dispatch({ type: "SET_SCHEDULE", payload: newSchedule });
+    }
   };
 
   const completeOnboarding = async () => {
@@ -294,6 +354,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         updateCycleData,
         addBMI,
         updateCustomPlans,
+        deleteCustomPlan,
         completeOnboarding,
         addWater,
         removeWater,

@@ -273,6 +273,51 @@ export default function GoalsScreen() {
             </View>
           ))}
         </View>
+
+        {/* Workout History */}
+        <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginBottom: 12 }}>Workout History</Text>
+        {state.history.length === 0 ? (
+          <View style={{ backgroundColor: colors.surface, borderRadius: 16, padding: 20, alignItems: "center", marginBottom: 24 }}>
+            <Text style={{ fontSize: 32 }}>🏁</Text>
+            <Text style={{ fontSize: 14, color: colors.muted, marginTop: 8, textAlign: "center" }}>
+              No workouts logged yet. Finish a workout and it will show up here.
+            </Text>
+          </View>
+        ) : (
+          <View style={{ backgroundColor: colors.surface, borderRadius: 16, padding: 8, marginBottom: 24 }}>
+            {state.history.slice(0, 15).map((h, idx, arr) => {
+              const d = new Date(h.date + "T00:00:00");
+              const dateLabel = isNaN(d.getTime())
+                ? h.date
+                : d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+              return (
+                <View
+                  key={h.id}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    paddingVertical: 10,
+                    paddingHorizontal: 8,
+                    borderBottomWidth: idx < arr.length - 1 ? 1 : 0,
+                    borderBottomColor: colors.border,
+                  }}
+                >
+                  <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.success + "20", alignItems: "center", justifyContent: "center", marginRight: 12 }}>
+                    <MaterialIcons name="check" size={20} color={colors.success} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground }} numberOfLines={1}>{h.planName || "Workout"}</Text>
+                    <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>{dateLabel}</Text>
+                  </View>
+                  <View style={{ alignItems: "flex-end" }}>
+                    <Text style={{ fontSize: 12, color: colors.muted }}>{h.duration} min</Text>
+                    <Text style={{ fontSize: 12, color: colors.warning, marginTop: 2 }}>{h.caloriesBurned} cal</Text>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        )}
       </ScrollView>
     </ScreenContainer>
   );

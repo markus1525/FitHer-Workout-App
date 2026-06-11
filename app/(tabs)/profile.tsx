@@ -11,6 +11,7 @@ import { useColors } from "@/hooks/use-colors";
 import { useThemeContext } from "@/lib/theme-provider";
 import { cmToFtIn, ftInToCm, formatHeight } from "@/lib/utils";
 import { exportAppData, importAppData } from "@/lib/storage";
+import { DEFAULT_WORKOUT_PLANS, WorkoutPlan } from "@/data/exercises";
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -19,6 +20,7 @@ export default function ProfileScreen() {
   const { colorScheme, setColorScheme } = useThemeContext();
   const [editing, setEditing] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [planPickerDay, setPlanPickerDay] = useState<number | null>(null);
 
   // Custom dialog state (replaces Alert.alert on native)
   const [dialog, setDialog] = useState<{
@@ -100,6 +102,8 @@ export default function ProfileScreen() {
   const [showAboutInfo, setShowAboutInfo] = useState(false);
   const [notifEnabled, setNotifEnabled] = useState(false);
   const [videoEnabled, setVideoEnabled] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [defaultTimer, setDefaultTimer] = useState(0); // 0 = use the plan's own timing
   const [showImportModal, setShowImportModal] = useState(false);
   const [importText, setImportText] = useState("");
   const [importing, setImporting] = useState(false);
@@ -124,6 +128,12 @@ export default function ProfileScreen() {
     checkPerm();
     AsyncStorage.getItem("fither_welcome_video_enabled").then((val) => {
       setVideoEnabled(val !== "false");
+    });
+    AsyncStorage.getItem("fither_exercise_sound_enabled").then((val) => {
+      setSoundEnabled(val !== "false");
+    });
+    AsyncStorage.getItem("fither_default_timer").then((val) => {
+      setDefaultTimer(val ? parseInt(val) || 0 : 0);
     });
   }, []);
 
@@ -211,6 +221,18 @@ export default function ProfileScreen() {
     await AsyncStorage.setItem("fither_welcome_video_enabled", val ? "true" : "false");
   };
 
+  const handleToggleSound = async (val: boolean) => {
+    setSoundEnabled(val);
+    await AsyncStorage.setItem("fither_exercise_sound_enabled", val ? "true" : "false");
+  };
+
+  const TIMER_OPTIONS = [0, 20, 30, 45, 60]; // 0 = use plan timing
+  const cycleDefaultTimer = async () => {
+    const next = TIMER_OPTIONS[(TIMER_OPTIONS.indexOf(defaultTimer) + 1) % TIMER_OPTIONS.length];
+    setDefaultTimer(next);
+    await AsyncStorage.setItem("fither_default_timer", String(next));
+  };
+
   const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   const handleSaveProfile = async () => {
@@ -244,8 +266,22 @@ export default function ProfileScreen() {
 
   const toggleRestDay = async (dayIndex: number) => {
     const newSchedule = { ...state.schedule };
-    newSchedule[dayIndex] = { ...newSchedule[dayIndex], isRestDay: !newSchedule[dayIndex]?.isRestDay };
+    const willBeRest = !newSchedule[dayIndex]?.isRestDay;
+    newSchedule[dayIndex] = {
+      ...newSchedule[dayIndex],
+      isRestDay: willBeRest,
+      // Drop any assigned plan when a day becomes a rest day
+      planId: willBeRest ? undefined : newSchedule[dayIndex]?.planId,
+    };
     await updateSchedule(newSchedule);
+    if (willBeRest && planPickerDay === dayIndex) setPlanPickerDay(null);
+  };
+
+  const assignPlanToDay = async (dayIndex: number, planId: string | undefined) => {
+    const newSchedule = { ...state.schedule };
+    newSchedule[dayIndex] = { ...newSchedule[dayIndex], isRestDay: false, planId };
+    await updateSchedule(newSchedule);
+    setPlanPickerDay(null);
   };
 
   const pickProfileImage = async () => {
@@ -716,7 +752,9 @@ export default function ProfileScreen() {
         {/* Workout Schedule */}
         <View className="rounded-2xl p-4 mb-4" style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
           <Text style={{ fontSize: 14, fontWeight: "600", color: colors.foreground, marginBottom: 8 }}>Workout Schedule</Text>
-          <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 12 }}>Tap to toggle rest days</Text>
+          <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 12 }}>Tap a day to toggle rest. On workout days, choose which plan to do.</Text>
+
+          {/* Rest day toggles */}
           <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
             {DAYS.map((day, idx) => {
               const isRest = state.schedule[idx]?.isRestDay ?? false;
@@ -748,6 +786,95 @@ export default function ProfileScreen() {
               <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: colors.border, marginRight: 4 }} />
               <Text style={{ fontSize: 12, color: colors.muted }}>Rest</Text>
             </View>
+          </View>
+
+          {/* Per day plan assignment */}
+          <View style={{ marginTop: 16, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 12 }}>
+            <Text style={{ fontSize: 13, fontWeight: "600", color: colors.foreground, marginBottom: 8 }}>Plan for each day</Text>
+            {DAYS.map((day, idx) => {
+              const dayInfo = state.schedule[idx];
+              const isRest = dayInfo?.isRestDay ?? false;
+              const allPlans: WorkoutPlan[] = [...DEFAULT_WORKOUT_PLANS, ...state.customPlans];
+              const assignedPlan = allPlans.find((p) => p.id === dayInfo?.planId);
+              const isOpen = planPickerDay === idx;
+              return (
+                <View key={`assign-${day}`} style={{ marginBottom: 6 }}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      if (isRest) return;
+                      setPlanPickerDay(isOpen ? null : idx);
+                    }}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      paddingVertical: 10,
+                      paddingHorizontal: 12,
+                      borderRadius: 12,
+                      backgroundColor: colors.background,
+                      borderWidth: 1,
+                      borderColor: isOpen ? colors.primary : colors.border,
+                      opacity: isRest ? 0.5 : 1,
+                    }}
+                    activeOpacity={isRest ? 1 : 0.7}
+                  >
+                    <Text style={{ fontSize: 13, fontWeight: "600", color: colors.foreground, width: 42 }}>{day}</Text>
+                    {isRest ? (
+                      <Text style={{ fontSize: 13, color: colors.muted, flex: 1, textAlign: "right" }}>Rest day</Text>
+                    ) : (
+                      <>
+                        <Text
+                          style={{ fontSize: 13, color: assignedPlan ? colors.foreground : colors.muted, flex: 1, textAlign: "right", marginRight: 6 }}
+                          numberOfLines={1}
+                        >
+                          {assignedPlan ? assignedPlan.name : "Choose a plan"}
+                        </Text>
+                        <MaterialIcons name={isOpen ? "expand-less" : "expand-more"} size={20} color={colors.muted} />
+                      </>
+                    )}
+                  </TouchableOpacity>
+
+                  {isOpen && !isRest && (
+                    <View style={{ marginTop: 4, marginLeft: 8, borderLeftWidth: 2, borderLeftColor: colors.border, paddingLeft: 8 }}>
+                      {assignedPlan && (
+                        <TouchableOpacity
+                          onPress={() => assignPlanToDay(idx, undefined)}
+                          style={{ paddingVertical: 8, paddingHorizontal: 10 }}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={{ fontSize: 13, color: colors.error }}>Clear selection</Text>
+                        </TouchableOpacity>
+                      )}
+                      {allPlans.map((p) => {
+                        const selected = p.id === dayInfo?.planId;
+                        return (
+                          <TouchableOpacity
+                            key={`${day}-${p.id}`}
+                            onPress={() => assignPlanToDay(idx, p.id)}
+                            style={{
+                              flexDirection: "row",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              paddingVertical: 8,
+                              paddingHorizontal: 10,
+                              borderRadius: 8,
+                              backgroundColor: selected ? colors.primary + "15" : "transparent",
+                            }}
+                            activeOpacity={0.7}
+                          >
+                            <Text style={{ fontSize: 13, color: colors.foreground, flex: 1 }} numberOfLines={1}>
+                              {p.name}
+                              {!p.isDefault ? "  (custom)" : ""}
+                            </Text>
+                            {selected && <MaterialIcons name="check" size={18} color={colors.primary} />}
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  )}
+                </View>
+              );
+            })}
           </View>
         </View>
 
@@ -861,6 +988,48 @@ export default function ProfileScreen() {
               style={{ transform: Platform.OS === "ios" ? [{ scaleX: 0.8 }, { scaleY: 0.8 }] : undefined }}
             />
           </View>
+
+          {/* Exercise End Sound */}
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              padding: 16,
+              borderBottomWidth: 1,
+              borderBottomColor: colors.border,
+            }}
+          >
+            <MaterialIcons name="notifications-active" size={20} color={colors.primary} />
+            <Text style={{ fontSize: 14, color: colors.foreground, marginLeft: 12, flex: 1 }}>
+              Exercise End Sound
+            </Text>
+            <Switch
+              value={soundEnabled}
+              onValueChange={handleToggleSound}
+              trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor={Platform.OS === "android" ? (soundEnabled ? colors.primary : "#f4f3f4") : undefined}
+              style={{ transform: Platform.OS === "ios" ? [{ scaleX: 0.8 }, { scaleY: 0.8 }] : undefined }}
+            />
+          </View>
+
+          {/* Default Exercise Timer */}
+          <TouchableOpacity
+            onPress={cycleDefaultTimer}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              padding: 16,
+              borderBottomWidth: 1,
+              borderBottomColor: colors.border,
+            }}
+            activeOpacity={0.7}
+          >
+            <MaterialIcons name="timer" size={20} color={colors.primary} />
+            <Text style={{ fontSize: 14, color: colors.foreground, marginLeft: 12, flex: 1 }}>
+              Default Exercise Timer: {defaultTimer === 0 ? "Use plan timing" : `${defaultTimer}s`}
+            </Text>
+            <MaterialIcons name="swap-horiz" size={20} color={colors.muted} />
+          </TouchableOpacity>
 
           {/* Workouts Mode */}
           <TouchableOpacity

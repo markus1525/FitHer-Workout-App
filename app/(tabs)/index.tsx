@@ -5,7 +5,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ScreenContainer } from "@/components/screen-container";
 import { useApp } from "@/lib/app-context";
-import { MOTIVATIONAL_QUOTES, DEFAULT_WORKOUT_PLANS, CYCLE_PHASES } from "@/data/exercises";
+import { MOTIVATIONAL_QUOTES, DEFAULT_WORKOUT_PLANS, CYCLE_PHASES, EXERCISES } from "@/data/exercises";
 import { useColors } from "@/hooks/use-colors";
 import { MotivationVideoModal } from "@/components/ui/motivation-video-modal";
 import { videoSession } from "@/lib/video-session";
@@ -92,6 +92,16 @@ export default function HomeScreen() {
   const phaseInfo = currentPhase ? CYCLE_PHASES[currentPhase as keyof typeof CYCLE_PHASES] : null;
   const todayDay = new Date().getDay();
   const isRestDay = state.schedule[todayDay]?.isRestDay ?? false;
+
+  // Plan assigned to today (if any)
+  const todayPlanId = state.schedule[todayDay]?.planId;
+  const todayPlan = todayPlanId
+    ? [...DEFAULT_WORKOUT_PLANS, ...state.customPlans].find((p) => p.id === todayPlanId)
+    : undefined;
+  const todayIsCustom = todayPlan ? !todayPlan.isDefault : false;
+  const todayExercises = todayPlan
+    ? todayPlan.exercises.map((id) => EXERCISES.find((e) => e.id === id)).filter(Boolean)
+    : [];
 
   const workedOutToday = state.history.some((h) => h.date === today);
   const showReminder = state.onboardingDone && !workedOutToday && !isRestDay && !reminderDismissed;
@@ -204,12 +214,64 @@ export default function HomeScreen() {
         <View style={{ backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 16 }}>
           <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginBottom: 12 }}>Today's Plan</Text>
           {isRestDay ? (
-            <View style={{ alignItems: "center", paddingVertical: 16 }}>
-              <Text style={{ fontSize: 40 }}>🧘‍♀️</Text>
-              <Text style={{ fontSize: 18, fontWeight: "600", color: colors.foreground, marginTop: 8 }}>Rest Day</Text>
-              <Text style={{ fontSize: 14, color: colors.muted, textAlign: "center", marginTop: 4 }}>
-                Take it easy! Stretch, hydrate, and recover.
-              </Text>
+            <View style={{ paddingVertical: 8 }}>
+              <View style={{ alignItems: "center" }}>
+                <Text style={{ fontSize: 40 }}>🧘‍♀️</Text>
+                <Text style={{ fontSize: 18, fontWeight: "600", color: colors.foreground, marginTop: 8 }}>Rest Day</Text>
+                <Text style={{ fontSize: 14, color: colors.muted, textAlign: "center", marginTop: 4 }}>
+                  Recovery is part of the plan. Try a little of this today:
+                </Text>
+              </View>
+              <View style={{ marginTop: 12, gap: 8 }}>
+                {[
+                  { icon: "self-improvement", text: "5–10 min light stretching" },
+                  { icon: "directions-walk", text: "An easy walk to stay active" },
+                  { icon: "water-drop", text: "Drink your water goal" },
+                  { icon: "bedtime", text: "Aim for good sleep tonight" },
+                ].map((tip) => (
+                  <View key={tip.text} style={{ flexDirection: "row", alignItems: "center" }}>
+                    <MaterialIcons name={tip.icon as any} size={18} color={colors.primary} />
+                    <Text style={{ fontSize: 13, color: colors.foreground, marginLeft: 10 }}>{tip.text}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          ) : todayPlan ? (
+            <View>
+              {/* Assigned plan summary */}
+              <View style={{ marginBottom: 12 }}>
+                <Text style={{ fontSize: 18, fontWeight: "700", color: colors.foreground }}>{todayPlan.name}</Text>
+                <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>
+                  {todayPlan.duration} min • {todayExercises.length} exercises • {todayPlan.difficulty}
+                </Text>
+              </View>
+
+              {/* Exercise preview list */}
+              <View style={{ marginBottom: 12 }}>
+                {todayExercises.slice(0, 5).map((ex, i) => (
+                  <View key={ex!.id} style={{ flexDirection: "row", alignItems: "center", paddingVertical: 4 }}>
+                    <Text style={{ fontSize: 16, marginRight: 8 }}>{ex!.image}</Text>
+                    <Text style={{ fontSize: 13, color: colors.foreground, flex: 1 }} numberOfLines={1}>{ex!.name}</Text>
+                    <Text style={{ fontSize: 12, color: colors.muted }}>
+                      {ex!.reps ? `${ex!.reps} reps` : `${ex!.duration}s`}
+                    </Text>
+                  </View>
+                ))}
+                {todayExercises.length > 5 && (
+                  <Text style={{ fontSize: 12, color: colors.muted, marginTop: 4 }}>
+                    +{todayExercises.length - 5} more
+                  </Text>
+                )}
+              </View>
+
+              <TouchableOpacity
+                onPress={() => router.push({ pathname: "/workout-detail" as any, params: { planId: todayPlan.id, isCustom: todayIsCustom ? "1" : "0" } })}
+                style={{ backgroundColor: colors.primary, borderRadius: 12, padding: 16, alignItems: "center", flexDirection: "row", justifyContent: "center" }}
+                activeOpacity={0.8}
+              >
+                <MaterialIcons name="play-arrow" size={24} color="#FFF" />
+                <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16, marginLeft: 6 }}>Start Workout</Text>
+              </TouchableOpacity>
             </View>
           ) : (
             <TouchableOpacity

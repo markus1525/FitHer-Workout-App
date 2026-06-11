@@ -38,7 +38,7 @@ export function YouTubeModal({ visible, videoId, title, onClose }: YouTubeModalP
       <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
         <View style={styles.backdrop}>
           <TouchableOpacity style={StyleSheet.absoluteFillObject} onPress={onClose} activeOpacity={1} />
-          <View style={[styles.card, { backgroundColor: colors.card, width: thumbWidth + 48 }]}>
+          <View style={[styles.card, { backgroundColor: colors.surface, width: thumbWidth + 48 }]}>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
               <MaterialIcons name="close" size={22} color={colors.foreground} />
             </TouchableOpacity>
@@ -69,7 +69,7 @@ export function YouTubeModal({ visible, videoId, title, onClose }: YouTubeModalP
       <View style={styles.backdrop}>
         <TouchableOpacity style={StyleSheet.absoluteFillObject} onPress={onClose} activeOpacity={1} />
 
-        <View style={[styles.card, { backgroundColor: colors.card, width: thumbWidth + 48 }]}>
+        <View style={[styles.card, { backgroundColor: colors.surface, width: thumbWidth + 48 }]}>
           {/* Header row */}
           <View style={styles.header}>
             <Text style={[styles.title, { color: colors.foreground }]} numberOfLines={2}>

@@ -123,6 +123,41 @@ export default function WorkoutDetailScreen() {
                 </TouchableOpacity>
               </View>
               <Text style={{ fontSize: 12, color: colors.muted, marginTop: 8, marginLeft: 52 }} numberOfLines={2}>{exercise.description}</Text>
+
+              {/* Optional coaching detail */}
+              {exercise.targetMuscles && exercise.targetMuscles.length > 0 && (
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 8, marginLeft: 52 }}>
+                  {exercise.targetMuscles.map((muscle) => (
+                    <View key={muscle} style={{ backgroundColor: colors.primary + "15", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 }}>
+                      <Text style={{ fontSize: 11, color: colors.primary, fontWeight: "500" }}>{muscle}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {exercise.formTips && exercise.formTips.length > 0 && (
+                <View style={{ marginTop: 10, marginLeft: 52 }}>
+                  <Text style={{ fontSize: 12, fontWeight: "600", color: colors.foreground, marginBottom: 4 }}>How to do it</Text>
+                  {exercise.formTips.map((tip, i) => (
+                    <View key={i} style={{ flexDirection: "row", marginBottom: 3 }}>
+                      <Text style={{ fontSize: 12, color: colors.primary, marginRight: 6, fontWeight: "700" }}>{i + 1}.</Text>
+                      <Text style={{ fontSize: 12, color: colors.muted, flex: 1 }}>{tip}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {exercise.commonMistakes && exercise.commonMistakes.length > 0 && (
+                <View style={{ marginTop: 8, marginLeft: 52 }}>
+                  <Text style={{ fontSize: 12, fontWeight: "600", color: colors.error, marginBottom: 4 }}>Avoid</Text>
+                  {exercise.commonMistakes.map((m, i) => (
+                    <View key={i} style={{ flexDirection: "row", marginBottom: 3 }}>
+                      <Text style={{ fontSize: 12, color: colors.error, marginRight: 6 }}>✕</Text>
+                      <Text style={{ fontSize: 12, color: colors.muted, flex: 1 }}>{m}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
             </View>
           );
         })}

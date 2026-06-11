@@ -1,18 +1,50 @@
 import { ScrollView, Text, View, TouchableOpacity, FlatList } from "react-native";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/screen-container";
+import { AppDialog, DialogButton } from "@/components/ui/app-dialog";
 import { useApp } from "@/lib/app-context";
 import { DEFAULT_WORKOUT_PLANS, BODY_PARTS, WorkoutPlan } from "@/data/exercises";
 import { useColors } from "@/hooks/use-colors";
 
 export default function WorkoutsScreen() {
   const router = useRouter();
-  const { state, toggleFavoritePlan } = useApp();
+  const { state, toggleFavoritePlan, deleteCustomPlan } = useApp();
   const colors = useColors();
   const [activeTab, setActiveTab] = useState<"default" | "custom">("default");
   const [selectedFilter, setSelectedFilter] = useState<string>("All");
+
+  // Custom dialog state (replaces Alert.alert / window.confirm)
+  const [dialog, setDialog] = useState<{
+    title: string;
+    message?: string;
+    buttons: DialogButton[];
+  } | null>(null);
+
+  const showDialog = useCallback((title: string, message: string | undefined, buttons: DialogButton[]) => {
+    setDialog({ title, message, buttons });
+  }, []);
+
+  const dismissDialog = useCallback(() => setDialog(null), []);
+
+  const confirmDeletePlan = useCallback((plan: WorkoutPlan) => {
+    showDialog(
+      "Delete Plan",
+      `Delete "${plan.name}"? This cannot be undone.`,
+      [
+        { label: "Cancel", onPress: dismissDialog },
+        {
+          label: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            await deleteCustomPlan(plan.id);
+            dismissDialog();
+          },
+        },
+      ]
+    );
+  }, [showDialog, dismissDialog, deleteCustomPlan]);
 
   const workoutsMode = state.profile?.workoutsMode || "both";
 
@@ -126,12 +158,62 @@ export default function WorkoutsScreen() {
             />
           </TouchableOpacity>
         )}
+
+        {!isDefaultPlan && (
+          <>
+            <TouchableOpacity
+              onPress={(e) => {
+                if (e && e.stopPropagation) {
+                  e.stopPropagation();
+                }
+                router.push({ pathname: "/create-plan" as any, params: { editId: item.id } });
+              }}
+              style={{
+                padding: 8,
+                position: "absolute",
+                right: 44,
+                top: 8,
+                zIndex: 10,
+              }}
+              activeOpacity={0.7}
+              accessibilityLabel={`Edit ${item.name}`}
+            >
+              <MaterialIcons name="edit" size={20} color={colors.muted} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={(e) => {
+                if (e && e.stopPropagation) {
+                  e.stopPropagation();
+                }
+                confirmDeletePlan(item);
+              }}
+              style={{
+                padding: 8,
+                position: "absolute",
+                right: 8,
+                top: 8,
+                zIndex: 10,
+              }}
+              activeOpacity={0.7}
+              accessibilityLabel={`Delete ${item.name}`}
+            >
+              <MaterialIcons name="delete-outline" size={22} color={colors.error} />
+            </TouchableOpacity>
+          </>
+        )}
       </TouchableOpacity>
     );
   };
 
   return (
     <ScreenContainer className="px-4 pt-2">
+      <AppDialog
+        visible={dialog !== null}
+        title={dialog?.title || ""}
+        message={dialog?.message}
+        buttons={dialog?.buttons || []}
+        onDismiss={dismissDialog}
+      />
       {/* Header */}
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
         <Text style={{ fontSize: 24, fontWeight: "700", color: colors.foreground }}>Workouts</Text>

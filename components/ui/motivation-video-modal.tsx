@@ -150,6 +150,19 @@ export function MotivationVideoModal({ visible, onClose, onDontShowAgain, startM
             nativeControls={false}
             allowsFullscreen={false}
             allowsPictureInPicture={false}
+            // TextureView renders inside the view tree, so it attaches its
+            // surface reliably inside a Modal. SurfaceView (the default) often
+            // shows a black frame on first open and tears on reopen.
+            surfaceType="textureView"
+            // Once a real frame is on screen the surface is attached, so clear
+            // any pending-play flag. If playback somehow has not started yet,
+            // start it now.
+            onFirstFrameRender={() => {
+              pendingPlay.current = false;
+              if (visible && player.status === "readyToPlay" && !player.playing) {
+                player.play();
+              }
+            }}
           />
         )}
 

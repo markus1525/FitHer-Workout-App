@@ -1,6 +1,6 @@
 import { ScrollView, Text, View, TouchableOpacity, TextInput } from "react-native";
-import { useState } from "react";
-import { useRouter } from "expo-router";
+import { useState, useEffect, useRef } from "react";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/screen-container";
 import { useApp } from "@/lib/app-context";
@@ -9,14 +9,30 @@ import { useColors } from "@/hooks/use-colors";
 
 export default function CreatePlanScreen() {
   const router = useRouter();
+  const { editId } = useLocalSearchParams<{ editId?: string }>();
   const { state, updateCustomPlans } = useApp();
   const colors = useColors();
 
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [difficulty, setDifficulty] = useState<"beginner" | "intermediate" | "advanced">("beginner");
-  const [selectedExercises, setSelectedExercises] = useState<string[]>([]);
+  const editingPlan = editId ? state.customPlans.find((p) => p.id === editId) : undefined;
+  const isEditing = !!editingPlan;
+
+  const [name, setName] = useState(editingPlan?.name || "");
+  const [description, setDescription] = useState(editingPlan?.description || "");
+  const [difficulty, setDifficulty] = useState<"beginner" | "intermediate" | "advanced">(editingPlan?.difficulty || "beginner");
+  const [selectedExercises, setSelectedExercises] = useState<string[]>(editingPlan?.exercises || []);
   const [filterBodyPart, setFilterBodyPart] = useState("All");
+
+  // Custom plans may load just after this screen mounts, so prefill once they arrive.
+  const prefilled = useRef(false);
+  useEffect(() => {
+    if (editingPlan && !prefilled.current) {
+      prefilled.current = true;
+      setName(editingPlan.name);
+      setDescription(editingPlan.description);
+      setDifficulty(editingPlan.difficulty);
+      setSelectedExercises(editingPlan.exercises);
+    }
+  }, [editingPlan]);
 
   const workoutsMode = state.profile?.workoutsMode || "both";
 
@@ -43,8 +59,8 @@ export default function CreatePlanScreen() {
     const bodyParts = [...new Set(selectedExData.map((e) => e.bodyPart))];
     const totalDuration = Math.round(selectedExData.reduce((sum, e) => sum + e.duration, 0) / 60);
 
-    const newPlan: WorkoutPlan = {
-      id: `custom-${Date.now()}`,
+    const planData: WorkoutPlan = {
+      id: editingPlan ? editingPlan.id : `custom-${Date.now()}`,
       name: name.trim(),
       description: description.trim() || `Custom plan with ${selectedExercises.length} exercises`,
       difficulty,
@@ -54,7 +70,9 @@ export default function CreatePlanScreen() {
       isDefault: false,
     };
 
-    const updated = [...state.customPlans, newPlan];
+    const updated = editingPlan
+      ? state.customPlans.map((p) => (p.id === editingPlan.id ? planData : p))
+      : [...state.customPlans, planData];
     await updateCustomPlans(updated);
     router.back();
   };
@@ -67,7 +85,7 @@ export default function CreatePlanScreen() {
           <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 12 }} activeOpacity={0.7}>
             <MaterialIcons name="arrow-back" size={24} color={colors.foreground} />
           </TouchableOpacity>
-          <Text style={{ fontSize: 20, fontWeight: "700", color: colors.foreground }}>Create Plan</Text>
+          <Text style={{ fontSize: 20, fontWeight: "700", color: colors.foreground }}>{isEditing ? "Edit Plan" : "Create Plan"}</Text>
         </View>
         <TouchableOpacity
           onPress={handleSave}
