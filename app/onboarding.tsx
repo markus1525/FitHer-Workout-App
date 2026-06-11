@@ -205,6 +205,7 @@ export default function OnboardingScreen() {
         onClose={handleVideoClose}
         onDontShowAgain={handleDontShowAgain}
         startMuted={videoStartMuted}
+        allowSoundAutoplay
       />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
         {/* Progress */}

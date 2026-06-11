@@ -12,9 +12,16 @@ interface Props {
   onDontShowAgain: () => void;
   /** First and second show: false (plays with sound). Third time onwards: true (muted). */
   startMuted?: boolean;
+  /**
+   * True only when the modal opens from a user tap (onboarding Complete). On
+   * web that gesture lets the video autoplay with sound. When false (the app
+   * auto-opens on launch), the video must start muted or the browser blocks it
+   * and iOS can show a black frame.
+   */
+  allowSoundAutoplay?: boolean;
 }
 
-export function MotivationVideoModal({ visible, onClose, onDontShowAgain, startMuted = false }: Props) {
+export function MotivationVideoModal({ visible, onClose, onDontShowAgain, startMuted = false, allowSoundAutoplay = false }: Props) {
   const [muted, setMuted] = useState(true);
 
   // Web: control via HTML video ref
@@ -48,14 +55,22 @@ export function MotivationVideoModal({ visible, onClose, onDontShowAgain, startM
 
   // Web: shared play helper used by both onCanPlay and the visibility effect.
   const webPlay = (vid: HTMLVideoElement) => {
-    vid.muted = startMuted;
-    setMuted(startMuted);
-    vid.play().catch(() => {
-      // Browser blocked unmuted autoplay — fall back to muted
+    if (allowSoundAutoplay) {
+      // Opened from a user tap (onboarding): try with sound, fall back to muted.
+      vid.muted = startMuted;
+      setMuted(startMuted);
+      vid.play().catch(() => {
+        vid.muted = true;
+        setMuted(true);
+        vid.play().catch(() => {});
+      });
+    } else {
+      // Auto-opened on app launch: always start muted so the frame renders.
+      // The "Tap for Sound" button lets the user unmute.
       vid.muted = true;
       setMuted(true);
-      vid.play().catch(console.log);
-    });
+      vid.play().catch(() => {});
+    }
   };
 
   // Web: fires when the video element is ready to play (first mount or src change).
