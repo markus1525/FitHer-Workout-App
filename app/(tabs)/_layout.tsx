@@ -12,14 +12,16 @@ export default function TabLayout() {
   // Native: use the real safe-area inset (34 on devices with a home indicator,
   // small on older phones), with a minimum for breathing room.
   // Web: use the CSS env() value directly, which is accurate per device thanks
-  // to viewport-fit=cover. Keep the base padding small — the env() inset alone
-  // already clears the home indicator, anything extra reads as a white gap.
+  // to viewport-fit=cover. The bar dips 6px into the inset zone (still well
+  // above the home indicator pill) so the white strip stays small, and the
+  // content row keeps a fixed 48px so icon + label never get clipped.
   const nativeBottom = Math.max(insets.bottom, 10);
+  const webBottom = "max(6px, calc(env(safe-area-inset-bottom, 0px) - 6px))";
 
   const tabBarStyle: any = {
     paddingTop: isWeb ? 6 : 8,
-    paddingBottom: isWeb ? "max(6px, env(safe-area-inset-bottom, 0px))" : nativeBottom,
-    height: isWeb ? "calc(50px + max(6px, env(safe-area-inset-bottom, 0px)))" : 56 + nativeBottom,
+    paddingBottom: isWeb ? webBottom : nativeBottom,
+    height: isWeb ? `calc(54px + ${webBottom})` : 56 + nativeBottom,
     backgroundColor: colors.background,
     borderTopColor: colors.border,
     borderTopWidth: 0.5,

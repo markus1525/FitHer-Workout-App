@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Modal, Platform, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, Pressable, Modal, Platform, StyleSheet } from "react-native";
 import { useEffect, useRef, useState } from "react";
 import { VideoView, useVideoPlayer } from "expo-video";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -23,6 +23,9 @@ interface Props {
 
 export function MotivationVideoModal({ visible, onClose, onDontShowAgain, startMuted = false, allowSoundAutoplay = false }: Props) {
   const [muted, setMuted] = useState(true);
+  // Web: true when the browser refused autoplay entirely (e.g. iOS Low Power
+  // Mode blocks ALL autoplay, even muted). We then wait for a tap to play.
+  const [needsTap, setNeedsTap] = useState(false);
 
   // Web: control via HTML video ref
   const videoRef = useRef<any>(null);
@@ -59,25 +62,31 @@ export function MotivationVideoModal({ visible, onClose, onDontShowAgain, startM
       // Opened from a user tap (onboarding): try with sound, fall back to muted.
       vid.muted = startMuted;
       setMuted(startMuted);
-      vid.play().catch(() => {
+      vid.play().then(() => setNeedsTap(false)).catch(() => {
         vid.muted = true;
         setMuted(true);
-        vid.play().catch(() => {});
+        vid.play().then(() => setNeedsTap(false)).catch(() => setNeedsTap(true));
       });
     } else {
       // Auto-opened on app launch: always start muted so the frame renders.
       // The "Tap for Sound" button lets the user unmute.
       vid.muted = true;
       setMuted(true);
-      vid.play().catch(() => {
-        // iOS sometimes rejects the first attempt while the source is still
-        // initializing. Reload and try once more.
-        try {
-          vid.load();
-          vid.play().catch(() => {});
-        } catch {}
+      vid.play().then(() => setNeedsTap(false)).catch(() => {
+        // Autoplay refused (iOS Low Power Mode blocks even muted autoplay).
+        // Do NOT retry or reload in a loop — that causes a visible flicker.
+        // Instead wait for a tap anywhere on the video to start playback.
+        setNeedsTap(true);
       });
     }
+  };
+
+  // Web: a tap anywhere on the video counts as a user gesture, which is
+  // always allowed to start playback (covers Low Power Mode).
+  const handleVideoTap = () => {
+    const vid = videoRef.current;
+    if (Platform.OS !== "web" || !vid) return;
+    vid.play().then(() => setNeedsTap(false)).catch(() => {});
   };
 
   // Web: fires when the video element is ready to play (first mount or src change).
@@ -101,6 +110,7 @@ export function MotivationVideoModal({ visible, onClose, onDontShowAgain, startM
     if (!visible) {
       if (vid) { vid.pause(); vid.currentTime = 0; }
       setMuted(true);
+      setNeedsTap(false);
       return;
     }
     if (vid) webPlay(vid);
@@ -140,6 +150,10 @@ export function MotivationVideoModal({ visible, onClose, onDontShowAgain, startM
     const next = !muted;
     if (Platform.OS === "web" && videoRef.current) {
       videoRef.current.muted = next;
+      // If autoplay was blocked, this tap is a gesture — start playback too.
+      if (videoRef.current.paused) {
+        videoRef.current.play().then(() => setNeedsTap(false)).catch(() => {});
+      }
     } else {
       player.muted = next;
     }
@@ -219,6 +233,13 @@ export function MotivationVideoModal({ visible, onClose, onDontShowAgain, startM
             <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.7)" }} />
             <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.9)" }} />
           </View>
+        )}
+
+        {/* Tap-to-play layer — only when the browser refused autoplay. Sits
+            over the video (under the buttons) so tapping the dimmed iOS play
+            icon, or anywhere else, starts playback with a real gesture. */}
+        {Platform.OS === "web" && needsTap && (
+          <Pressable style={StyleSheet.absoluteFillObject} onPress={handleVideoTap} />
         )}
 
         {/* Sound toggle — shown when muted so user can tap to unmute */}
