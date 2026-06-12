@@ -9,19 +9,22 @@ export default function TabLayout() {
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
 
-  // Native: use the real safe-area inset (34 on devices with a home indicator,
-  // small on older phones), with a minimum for breathing room.
-  // Web: use the CSS env() value directly, which is accurate per device thanks
-  // to viewport-fit=cover. The bar dips 6px into the inset zone (still well
-  // above the home indicator pill) so the white strip stays small, and the
-  // content row keeps a fixed 48px so icon + label never get clipped.
-  const nativeBottom = Math.max(insets.bottom, 10);
-  const webBottom = "max(6px, calc(env(safe-area-inset-bottom, 0px) - 6px))";
+  // Tab bar sizing = a fixed content row (icon + label) + the bottom safe-area
+  // inset, the same structure native iOS/Android tab bars use.
+  // The content row needs ~54px so the 11px labels keep their full baseline —
+  // anything under ~50px clips the text descenders.
+  // Native: real inset from react-native-safe-area-context (with a minimum).
+  // Web: CSS env() directly, since the JS-measured inset is unreliable in a
+  // PWA. env() is exact per device thanks to viewport-fit=cover.
+  const CONTENT = 54;
+  const PAD_TOP = 4;
+  const nativeBottom = Math.max(insets.bottom, 8);
+  const webBottom = "max(8px, env(safe-area-inset-bottom, 0px))";
 
   const tabBarStyle: any = {
-    paddingTop: isWeb ? 6 : 8,
+    paddingTop: PAD_TOP,
     paddingBottom: isWeb ? webBottom : nativeBottom,
-    height: isWeb ? `calc(54px + ${webBottom})` : 56 + nativeBottom,
+    height: isWeb ? `calc(${CONTENT + PAD_TOP}px + ${webBottom})` : CONTENT + PAD_TOP + nativeBottom,
     backgroundColor: colors.background,
     borderTopColor: colors.border,
     borderTopWidth: 0.5,
@@ -37,6 +40,9 @@ export default function TabLayout() {
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: "600",
+          // Explicit line height so the label box always fits the text
+          // baseline and descenders (g, y, p) instead of clipping them.
+          lineHeight: 14,
         },
       }}
     >
