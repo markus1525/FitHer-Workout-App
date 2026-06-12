@@ -10,7 +10,7 @@ interface Props {
   visible: boolean;
   onClose: () => void;
   onDontShowAgain: () => void;
-  /** First and second show: false (plays with sound). Third time onwards: true (muted). */
+  /** First show only: false (plays with sound). Every later show: true (muted). */
   startMuted?: boolean;
   /**
    * True only when the modal opens from a user tap (onboarding Complete). On
@@ -69,7 +69,14 @@ export function MotivationVideoModal({ visible, onClose, onDontShowAgain, startM
       // The "Tap for Sound" button lets the user unmute.
       vid.muted = true;
       setMuted(true);
-      vid.play().catch(() => {});
+      vid.play().catch(() => {
+        // iOS sometimes rejects the first attempt while the source is still
+        // initializing. Reload and try once more.
+        try {
+          vid.load();
+          vid.play().catch(() => {});
+        } catch {}
+      });
     }
   };
 
@@ -82,8 +89,12 @@ export function MotivationVideoModal({ visible, onClose, onDontShowAgain, startM
     if (vid && visible) webPlay(vid);
   };
 
-  // Web: when modal becomes visible and video is already loaded (readyState ≥ 3),
-  // onCanPlay won't fire again — play directly. When hidden, pause + reset.
+  // Web: when the modal becomes visible, attempt playback right away. Do NOT
+  // wait for readyState/canplay here — iOS Safari does not buffer video data
+  // until play() is requested, so waiting for canplay before calling play()
+  // deadlocks and leaves a black frame. Calling play() on a still-loading
+  // video is safe (the promise resolves once playback starts) and it forces
+  // iOS to begin loading. onCanPlay stays as a backup trigger.
   useEffect(() => {
     if (Platform.OS !== "web") return;
     const vid = videoRef.current;
@@ -92,9 +103,7 @@ export function MotivationVideoModal({ visible, onClose, onDontShowAgain, startM
       setMuted(true);
       return;
     }
-    // readyState 3 = HAVE_FUTURE_DATA, 4 = HAVE_ENOUGH_DATA — already loaded
-    if (vid && vid.readyState >= 3) webPlay(vid);
-    // else: onCanPlay will fire once the video is ready
+    if (vid) webPlay(vid);
   }, [visible, startMuted]);
 
   // Native: play/pause based on visibility
@@ -103,17 +112,23 @@ export function MotivationVideoModal({ visible, onClose, onDontShowAgain, startM
   useEffect(() => {
     if (Platform.OS === "web") return;
     if (visible) {
-      if (player.status === "readyToPlay") {
-        pendingPlay.current = false;
-        setTimeout(() => {
+      const tryPlay = () => {
+        if (player.status === "readyToPlay") {
+          pendingPlay.current = false;
           player.muted = startMuted;
           player.play();
           setMuted(startMuted);
-        }, 80);
-      } else {
-        // Player not ready yet — statusChange handler will start playback
-        pendingPlay.current = true;
-      }
+        }
+      };
+      // statusChange handler will start playback if the player is still loading
+      pendingPlay.current = true;
+      const t0 = setTimeout(tryPlay, 80);
+      // Retry fallbacks: cover the race where readyToPlay fired before this
+      // effect set pendingPlay (so the statusChange listener never plays) and
+      // any case where the surface attached late and the frame stayed black.
+      const t1 = setTimeout(() => { if (!player.playing) tryPlay(); }, 700);
+      const t2 = setTimeout(() => { if (!player.playing) tryPlay(); }, 2000);
+      return () => { clearTimeout(t0); clearTimeout(t1); clearTimeout(t2); };
     } else {
       pendingPlay.current = false;
       player.pause();
@@ -154,6 +169,12 @@ export function MotivationVideoModal({ visible, onClose, onDontShowAgain, startM
               muted
               playsInline
               preload="auto"
+              // Declarative muted autoplay is the path iOS Safari honors most
+              // reliably without a user gesture, and it forces the source to
+              // start loading. Only skipped when the modal opens from a tap
+              // (onboarding Complete), where we instead play with sound inside
+              // the gesture context.
+              autoPlay={!allowSoundAutoplay}
               onCanPlay={handleWebCanPlay}
             />
           </View>

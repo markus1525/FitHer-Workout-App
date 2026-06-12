@@ -135,7 +135,7 @@ export default function OnboardingScreen() {
     const shouldShowVideo = prefs.enabled;
 
     if (shouldShowVideo) {
-      setVideoStartMuted(prefs.count >= 2);
+      setVideoStartMuted(prefs.count >= 1);
       videoSession.markShown(); // claim slot before onboardingDone flips
       setShowVideo(true); // ← synchronous, gesture context still valid here
     }
@@ -209,7 +209,7 @@ export default function OnboardingScreen() {
       />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
         {/* Progress */}
-        <View style={{ flexDirection: "row", gap: 6, marginTop: 16, marginBottom: 32 }}>
+        <View style={{ flexDirection: "row", gap: 6, marginTop: 8, marginBottom: 32 }}>
           {[0, 1, 2, 3, 4, 5].map((i) => (
             <View
               key={i}

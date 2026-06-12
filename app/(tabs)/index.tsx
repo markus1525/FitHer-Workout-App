@@ -71,8 +71,9 @@ export default function HomeScreen() {
       ]).then(([enabled, countStr]) => {
         if (enabled !== "false") {
           const count = parseInt(countStr || "0");
-          // First and second play are with sound; third time onwards is muted
-          setVideoStartMuted(count >= 2);
+          // Only the very first play (from onboarding) is with sound;
+          // every later auto-play starts muted
+          setVideoStartMuted(count >= 1);
           AsyncStorage.setItem("fither_welcome_video_count", String(count + 1));
           setShowVideo(true);
         }

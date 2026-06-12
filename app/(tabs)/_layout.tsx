@@ -11,15 +11,15 @@ export default function TabLayout() {
 
   // Native: use the real safe-area inset (34 on devices with a home indicator,
   // small on older phones), with a minimum for breathing room.
-  // Web: the safe-area context reports 0 in a PWA, so use the CSS env() value,
-  // which is accurate per device thanks to viewport-fit=cover. A base of 10px
-  // keeps a gap even in browsers that report no inset.
+  // Web: use the CSS env() value directly, which is accurate per device thanks
+  // to viewport-fit=cover. Keep the base padding small — the env() inset alone
+  // already clears the home indicator, anything extra reads as a white gap.
   const nativeBottom = Math.max(insets.bottom, 10);
 
   const tabBarStyle: any = {
     paddingTop: isWeb ? 6 : 8,
-    paddingBottom: isWeb ? "calc(10px + env(safe-area-inset-bottom, 0px))" : nativeBottom,
-    height: isWeb ? "calc(66px + env(safe-area-inset-bottom, 0px))" : 56 + nativeBottom,
+    paddingBottom: isWeb ? "max(6px, env(safe-area-inset-bottom, 0px))" : nativeBottom,
+    height: isWeb ? "calc(50px + max(6px, env(safe-area-inset-bottom, 0px)))" : 56 + nativeBottom,
     backgroundColor: colors.background,
     borderTopColor: colors.border,
     borderTopWidth: 0.5,
