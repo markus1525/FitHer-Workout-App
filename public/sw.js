@@ -5,7 +5,7 @@
  * - Local scheduled notification via postMessage (no push server needed)
  */
 
-const CACHE_NAME = "fither-v2";
+const CACHE_NAME = "fither-v3";
 const BASE = "/FitHer-Workout-App";
 const OFFLINE_URL = BASE + "/offline.html";
 const ICON_URL =
@@ -64,20 +64,24 @@ self.addEventListener("fetch", (e) => {
   e.respondWith(
     fetch(e.request)
       .then((res) => {
-        // Only cache complete (200) responses (media/range requests already
-        // returned early above and never reach here).
-        const isComplete = res.status === 200;
-        if (url.includes(BASE) && isComplete) {
+        // Only cache immutable, content-hashed build assets (their URL changes
+        // every deploy, so they can never go stale). Never cache the HTML shell:
+        // a stale index.html would point to a deleted JS bundle and show a blank
+        // white screen, which is exactly the PWA "won't load" bug.
+        const isImmutable = url.includes("/_expo/static/");
+        if (isImmutable && res.status === 200) {
           const clone = res.clone();
           caches.open(CACHE_NAME).then((c) => c.put(e.request, clone));
         }
         return res;
       })
-      .catch(() =>
-        caches.match(e.request).then(
-          (cached) => cached || caches.match(OFFLINE_URL)
-        )
-      )
+      .catch(async () => {
+        // Offline: try the exact request, then the app shell, then the offline page.
+        const cached = await caches.match(e.request);
+        if (cached) return cached;
+        const shell = await caches.match(BASE + "/");
+        return shell || (await caches.match(OFFLINE_URL));
+      })
   );
 });
 
