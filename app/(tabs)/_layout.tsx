@@ -7,8 +7,23 @@ import { useColors } from "@/hooks/use-colors";
 export default function TabLayout() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const bottomPadding = Math.max(insets.bottom, Platform.OS === "web" ? 0 : 8);
-  const tabBarHeight = 56 + bottomPadding;
+  const isWeb = Platform.OS === "web";
+
+  // Native: use the real safe-area inset (34 on devices with a home indicator,
+  // small on older phones), with a minimum for breathing room.
+  // Web: the safe-area context reports 0 in a PWA, so use the CSS env() value,
+  // which is accurate per device thanks to viewport-fit=cover. A base of 10px
+  // keeps a gap even in browsers that report no inset.
+  const nativeBottom = Math.max(insets.bottom, 10);
+
+  const tabBarStyle: any = {
+    paddingTop: isWeb ? 6 : 8,
+    paddingBottom: isWeb ? "calc(10px + env(safe-area-inset-bottom, 0px))" : nativeBottom,
+    height: isWeb ? "calc(66px + env(safe-area-inset-bottom, 0px))" : 56 + nativeBottom,
+    backgroundColor: colors.background,
+    borderTopColor: colors.border,
+    borderTopWidth: 0.5,
+  };
 
   return (
     <Tabs
@@ -16,14 +31,7 @@ export default function TabLayout() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.muted,
         headerShown: false,
-        tabBarStyle: {
-          paddingTop: Platform.OS === "web" ? 0 : 8,
-          paddingBottom: bottomPadding,
-          height: tabBarHeight,
-          backgroundColor: colors.background,
-          borderTopColor: colors.border,
-          borderTopWidth: 0.5,
-        },
+        tabBarStyle,
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: "600",

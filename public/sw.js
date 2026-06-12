@@ -5,7 +5,7 @@
  * - Local scheduled notification via postMessage (no push server needed)
  */
 
-const CACHE_NAME = "fither-v1";
+const CACHE_NAME = "fither-v2";
 const BASE = "/FitHer-Workout-App";
 const OFFLINE_URL = BASE + "/offline.html";
 const ICON_URL =
@@ -54,15 +54,20 @@ self.addEventListener("fetch", (e) => {
   // Skip cross-origin requests (CDN assets, YouTube, etc.)
   if (!url.startsWith(self.location.origin)) return;
 
+  // Never intercept media or range requests. iOS Safari fails to render a video
+  // that is served through a service worker (range requests via respondWith get
+  // mishandled), which shows a black frame on every launch after the first.
+  // Letting the browser fetch these natively fixes the motivation video.
+  const isMedia = /\.(mp4|webm|mp3|ogg|wav|m4a|m4v|mov)(\?|$)/i.test(url);
+  if (isMedia || e.request.headers.has("range")) return;
+
   e.respondWith(
     fetch(e.request)
       .then((res) => {
-        // Only cache complete (200) responses — partial (206) range responses
-        // from video/audio streaming cannot be stored in the Cache API.
-        // Also skip large media files to avoid filling storage.
+        // Only cache complete (200) responses (media/range requests already
+        // returned early above and never reach here).
         const isComplete = res.status === 200;
-        const isMedia = /\.(mp4|webm|mp3|ogg|wav)(\?|$)/i.test(url);
-        if (url.includes(BASE) && isComplete && !isMedia) {
+        if (url.includes(BASE) && isComplete) {
           const clone = res.clone();
           caches.open(CACHE_NAME).then((c) => c.put(e.request, clone));
         }
